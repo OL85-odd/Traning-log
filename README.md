@@ -202,16 +202,9 @@ Endre `tier` direkte i `js/core/data/exercises.js` eller `data/plans.js` for
 
 ## Øvelsesbildene
 
-Hver av de 253 øvelsene har et bilde i `img/exercises/`. Det finnes to
-slag, og appen tegner begge (`npm run shell` skriver lista over hvilke som er
-hva til `js/core/data/icons.js`):
-
-- **Figur med muskler** (68 så langt): en silhuett av utøveren, med musklene
-  som gjør jobben i rødt. Vises stort øverst i øvelsesarket.
-- **Ensfarget piktogram** (de 185 andre): forrige generasjon, én maske i
-  kategoriens farge. Byttes ut etter hvert som `make-icons.py` kjøres;
-  `tools/draw-icons.py` og `tools/pictogram.py` tegnet 79 av dem med kode og
-  kan slettes når alle er figurer.
+Hver av de 253 øvelsene har et bilde i `img/exercises/`: en silhuett av
+utøveren, med musklene som gjør jobben i rødt (hvilestillingen Corpse Pose
+har ingen røde). Bildet vises stort øverst i øvelsesarket.
 
 `tools/make-icons.py` lar
 Gemini sitt bilde-API tegne dem ut fra `tools/icon-prompts.json`, som per
@@ -225,7 +218,7 @@ halvdelene oppå hverandre (`ExerciseFigure` i `js/ui/common.js`) og farger
 dem med `--figure` og `--muscle`, så samme fil virker i lyst og mørkt tema.
 
 ```sh
-python3 tools/make-icons.py                 # tegner de som mangler eller fortsatt er piktogram (trenger GEMINI_API_KEY)
+python3 tools/make-icons.py                 # tegner de som mangler (trenger GEMINI_API_KEY)
 python3 tools/make-icons.py deadlift squat  # tegner disse på nytt
 npm run shell                               # forteller appen hvilke som finnes
 ```
@@ -238,6 +231,11 @@ Hvert bilde koster penger og må ses over: modellen tegner av og til feil
 stilling, feil muskel, en ramme eller to personer. `tools/icon-originals/`
 (ikke sjekket inn) beholder det modellen leverte. En øvelse uten bilde viser
 kategoriens symbol.
+
+Appen kan fortsatt tegne et kvadratisk, ensfarget piktogram (forrige
+generasjon bilder) hvis en slik fil legges inn: `npm run shell` ser på
+bildestørrelsen og skriver til `js/core/data/icons.js` hvilke filer som er
+figurer med to lag.
 
 ## Kjente begrensninger
 
