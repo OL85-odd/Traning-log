@@ -9,7 +9,7 @@
 // exercises on every device.
 
 import { EXERCISE_DATA } from './data/exercises.js';
-import { DRAWN_ICONS } from './data/icons.js';
+import { DRAWN_ICONS, FIGURE_ICONS } from './data/icons.js';
 import { PLAN_DATA } from './data/plans.js';
 import { newBlock, newExercise, newPlan, newPlanDay, newSlot } from './models.js';
 
@@ -18,6 +18,11 @@ import { newBlock, newExercise, newPlan, newPlanDay, newSlot } from './models.js
 export const BUILT_IN_EXERCISES = EXERCISE_DATA.map(({ icon, ...fields }) => newExercise(fields));
 
 const KNOWN_ICONS = new Set(DRAWN_ICONS);
+const FIGURES = new Set(FIGURE_ICONS);
+
+/// Whether a picture file is a figure with its working muscles (two layers,
+/// see tools/make-icons.py) rather than an older one-colour pictogram.
+export const isFigureIcon = asset => FIGURES.has(asset);
 
 /// Exercise name -> pictogram file (without extension) in img/exercises/.
 /// Each exercise has a drawing of its own or none at all: one that is not

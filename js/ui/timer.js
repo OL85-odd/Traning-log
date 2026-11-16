@@ -148,7 +148,7 @@ export function IntervalTimer({ steps, onWorkDone, onClose }) {
       <div class="timer-bar"><div class="timer-fill" style="width:${Math.max(0, Math.min(100, (leftMs / (total * 1000)) * 100))}%"></div></div>
 
       ${shown && html`<div class="row" style="gap:14px;margin-top:28px">
-        <${ExerciseIcon} exercise=${shown.exercise} box=${64} img=${46} radius=${14} />
+        <${ExerciseIcon} exercise=${shown.exercise} box=${88} img=${60} radius=${16} />
         <div style="min-width:0;text-align:left">
           ${phase !== 'work' && html`<div class="label">Next</div>`}
           <div class="t-title3 truncate">${shown.exercise?.name ?? 'Exercise'}</div>

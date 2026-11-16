@@ -3,7 +3,7 @@
 // Swift: OddForm/Shared/**
 
 import { html, render, useEffect, useLayoutEffect, useReducer, useRef } from '../vendor/preact-htm.js';
-import { iconAssetName } from '../core/builtin.js';
+import { iconAssetName, isFigureIcon } from '../core/builtin.js';
 import { CATEGORIES, DAY_TYPES, MODIFIERS } from '../core/models.js';
 import { createStore } from '../core/store.js';
 import { UNIT_LABELS, countUnit, formatWeight, secondsToUnit, timeUnit, trimNumber } from '../core/units.js';
@@ -130,17 +130,36 @@ export function ActionSheet({ title, options, onCancel }) {
 
 // MARK: - Small shared views
 
-/// The exercise's pictogram in a rounded tile, in its category's colour;
-/// falls back to the category glyph. `box` is the tile size and `img` the
-/// picture size, in points as on iOS. With `onClick` the tile is a button.
-export function ExerciseIcon({ exercise, box = 44, img = 32, radius = 10, variant = '', onClick, label }) {
+/// The picture of an exercise. A figure file holds the body and, beside it,
+/// the muscles that do the work, both as masks (see tools/make-icons.py);
+/// the two halves are laid on top of each other here, the muscles in red.
+/// An older pictogram is one mask, drawn in the current text colour.
+/// Returns null when the exercise has no picture.
+export function ExerciseFigure({ exercise, size }) {
   const asset = iconAssetName(exercise);
+  if (!asset) return null;
+  // The file is set here, not through a CSS variable: a url() inside a
+  // variable is resolved against the stylesheet, not the page.
+  const file = `-webkit-mask-image:url(img/exercises/${asset}.png);mask-image:url(img/exercises/${asset}.png)`;
+  if (!isFigureIcon(asset)) {
+    return html`<span class="ex-glyph" style="width:${size}px;height:${size}px;${file}" aria-hidden="true"></span>`;
+  }
+  return html`<span class="ex-figure" style="width:${size}px;height:${size}px" aria-hidden="true">
+    <i class="body" style=${file}></i><i class="muscle" style=${file}></i>
+  </span>`;
+}
+
+/// The exercise's picture in a rounded tile; falls back to the category
+/// glyph in the category's colour. `box` is the tile size, in points as on
+/// iOS; the picture nearly fills it (`img` is the size of the fallback
+/// glyph's frame). With `onClick` the tile is a button.
+export function ExerciseIcon({ exercise, box = 44, img = 32, radius = 10, variant = '', onClick, label }) {
   const category = CATEGORIES[exercise?.category] ?? CATEGORIES.strength;
   const style = `width:${box}px;height:${box}px;border-radius:${radius}px`;
+  const asset = iconAssetName(exercise);
+  // A figure is finer than a pictogram and gets nearly the whole tile.
   const picture = asset
-    // The file is set here, not through a CSS variable: a url() inside a
-    // variable is resolved against the stylesheet, not the page.
-    ? html`<span class="ex-glyph" style="width:${img}px;height:${img}px;-webkit-mask-image:url(img/exercises/${asset}.png);mask-image:url(img/exercises/${asset}.png)"></span>`
+    ? html`<${ExerciseFigure} exercise=${exercise} size=${isFigureIcon(asset) ? Math.max(img, box - 6) : img} />`
     : html`<${Icon} name=${category.icon} size=${Math.round(img * 0.62)} />`;
   return onClick
     ? html`<button class="ex-icon c-${category.color} ${variant}" style=${style} aria-label=${label} onClick=${onClick}>${picture}</button>`

@@ -2,12 +2,12 @@
 // Swift: OddForm/Features/Library/*
 
 import { html, useState } from '../vendor/preact-htm.js';
-import { ALL_ICONS } from '../core/builtin.js';
+import { ALL_ICONS, iconAssetName, isFigureIcon } from '../core/builtin.js';
 import { format } from '../core/dates.js';
 import { CATEGORIES, EQUIPMENT, MUSCLE_GROUPS, newExercise } from '../core/models.js';
 import { seriesFor } from '../core/progressStats.js';
 import { ProgressChart, TrendLabel, seriesUnit } from './chart.js';
-import { Alert, Chip, ExerciseIcon, Sheet, describeSets, store } from './common.js';
+import { Alert, Chip, ExerciseFigure, ExerciseIcon, Sheet, describeSets, store } from './common.js';
 import { Icon } from './icons.js';
 
 export function LibraryView() {
@@ -58,7 +58,7 @@ export function LibraryView() {
         <div class="lib-section-head label c-${CATEGORIES[id].color}">${CATEGORIES[id].name}</div>
         ${exercises.map(exercise => html`
           <button key=${exercise.id} class="lib-row pressable" onClick=${() => setSelectedID(exercise.id)}>
-            <${ExerciseIcon} exercise=${exercise} box=${40} img=${28} radius=${8} />
+            <${ExerciseIcon} exercise=${exercise} box=${48} img=${32} radius=${10} />
             <div style="flex:1;min-width:0">
               <div class="row" style="gap:6px">
                 <span class="t-sub medium truncate">${exercise.name}</span>
@@ -85,10 +85,26 @@ export function LibraryView() {
 
 // MARK: - Shared pieces of the two exercise sheets
 
+/// Only a figure with muscles is worth showing large.
+const hasStage = exercise => isFigureIcon(iconAssetName(exercise));
+
+/// The picture, large: this is where the red muscles can be read.
+function Stage({ exercise }) {
+  const figure = html`<${ExerciseFigure} exercise=${exercise} size=${208} />`;
+  return hasStage(exercise) && html`<div class="figure-stage">
+    ${figure}
+    <div class="mono t-caption2 c-subtle" style="margin-top:6px">
+      <i class="legend-dot"></i>${exercise.category === 'mobility' ? 'Stretched or worked' : 'Working muscles'}
+    </div>
+  </div>`;
+}
+
+/// Name and category. Where the picture is shown large above (a built-in
+/// exercise), the small tile is left out.
 function Hero({ exercise, box, img, radius, titleSize, custom }) {
   const category = CATEGORIES[exercise.category];
   return html`<div class="row" style="gap:16px">
-    <${ExerciseIcon} exercise=${exercise} box=${box} img=${img} radius=${radius} />
+    ${!hasStage(exercise) && html`<${ExerciseIcon} exercise=${exercise} box=${box} img=${img} radius=${radius} />`}
     <div style="min-width:0">
       <div class="row" style="gap:8px;flex-wrap:wrap">
         <span class="bold" style="font-size:${titleSize}px">${exercise.name}</span>
@@ -172,7 +188,8 @@ function ExerciseDetailSheet({ exercise, onClose }) {
     right=${exercise.isCustom && { label: 'Edit', strong: true, onClick: () => setEditing(true) }}
     onClose=${onClose}>
     <div class="col" style="gap:24px;padding:var(--gutter) var(--gutter) 32px">
-      <div style="padding-top:8px">
+      <${Stage} exercise=${exercise} />
+      <div>
         <${Hero} exercise=${exercise} box=${72} img=${52} radius=${16} titleSize=${22} custom=${exercise.isCustom} />
       </div>
       <div class="divider flush"></div>
@@ -229,6 +246,7 @@ export function ExerciseInfoSheet({ exercise, onClose }) {
   const hasText = exercise.instructions.length > 0 || exercise.tips.length > 0;
   return html`<${Sheet} size="medium" right=${{ label: 'Done', strong: true, onClick: onClose }} onClose=${onClose}>
     <div class="col" style="gap:28px;padding:8px var(--gutter) 40px">
+      <${Stage} exercise=${exercise} />
       <${Hero} exercise=${exercise} box=${64} img=${46} radius=${14} titleSize=${20} />
 
       ${exercise.muscleGroups.length > 0 && html`

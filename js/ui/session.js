@@ -205,7 +205,7 @@ function RoundRow({ slot, exercise, round, session, onDone, onTimer }) {
 
   return html`<div class="round-row">
     <div class="row" style="gap:10px;padding:6px var(--gutter) 0">
-      <${ExerciseIcon} exercise=${exercise} box=${34} img=${26} radius=${8} variant="on-bg"
+      <${ExerciseIcon} exercise=${exercise} box=${44} img=${30} radius=${10} variant="on-bg"
         label="About ${exercise.name}" onClick=${() => setShowInfo(true)} />
       <div style="flex:1;min-width:0">
         <div class="t-sub medium truncate">${exercise.name}</div>

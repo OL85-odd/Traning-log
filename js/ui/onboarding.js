@@ -183,7 +183,7 @@ function PlanPreview({ plan }) {
         ${slotsOf(day).map(slot => {
           const exercise = store.exerciseByID(slot.exerciseID);
           return exercise && html`<div class="row" style="gap:10px">
-            <${ExerciseIcon} exercise=${exercise} box=${32} img=${24} radius=${8} />
+            <${ExerciseIcon} exercise=${exercise} box=${40} img=${28} radius=${9} />
             <span class="t-sub" style="flex:1;min-width:0">${exercise.name}</span>
             <span class="mono t-caption2 c-subtle">${slotDescription(slot, store.state.settings.preferredUnit)}</span>
           </div>`;

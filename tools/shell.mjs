@@ -17,17 +17,32 @@ const filesUnder = dir => readdirSync(new URL(dir, root), { withFileTypes: true,
   .map(entry => `${entry.parentPath ?? entry.path}/${entry.name}`.replace(root.pathname, ''))
   .sort();
 
-// The pictograms that exist. builtin.js shows an exercise's drawing only if
-// it is in this list; the others get their category glyph until they are drawn.
-const drawn = filesUnder('img/exercises')
-  .filter(file => file.endsWith('.png'))
-  .map(file => file.replace('img/exercises/', '').replace('.png', ''));
-writeFileSync(new URL('js/core/data/icons.js', root), `// The exercise pictograms that exist in img/exercises/.
+// The exercise pictures that exist. builtin.js shows an exercise's drawing
+// only if it is in this list; the others get their category glyph.
+const pictures = filesUnder('img/exercises').filter(file => file.endsWith('.png'));
+const name = file => file.replace('img/exercises/', '').replace('.png', '');
+const drawn = pictures.map(name);
+
+// Two kinds of file live there (see tools/make-icons.py): the figures with
+// their working muscles — twice as wide as high — and the older one-colour
+// pictograms, which are square. The app draws them differently, so it has
+// to know which is which: a PNG states its size in bytes 16–23.
+const isFigure = file => {
+  const header = readFileSync(new URL(file, root));
+  return header.readUInt32BE(16) === 2 * header.readUInt32BE(20);
+};
+const figures = pictures.filter(isFigure).map(name);
+
+writeFileSync(new URL('js/core/data/icons.js', root), `// The exercise pictures that exist in img/exercises/.
 // Written by \`npm run shell\` — do not edit by hand.
 
 export const DRAWN_ICONS = ${JSON.stringify(drawn, null, 2)};
+
+// Those of them that are a figure with its working muscles (two layers).
+// The rest are one-colour pictograms.
+export const FIGURE_ICONS = ${JSON.stringify(figures, null, 2)};
 `);
-console.log(`js/core/data/icons.js: ${drawn.length} pictograms`);
+console.log(`js/core/data/icons.js: ${drawn.length} pictures, ${figures.length} of them figures with muscles`);
 
 const files = ['./', 'index.html', 'manifest.webmanifest', ...['css', 'js', 'icons', 'img'].flatMap(filesUnder)];
 

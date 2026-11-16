@@ -1,10 +1,10 @@
 // Run with: npm test   (plain Node, no dependencies)
 import assert from 'node:assert/strict';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
 import { BackupError, makeBackup, parseBackup, serializeBackup } from '../js/core/backup.js';
-import { BUILT_IN_EXERCISES, ICON_MAP, builtInPlans } from '../js/core/builtin.js';
+import { BUILT_IN_EXERCISES, ICON_MAP, builtInPlans, isFigureIcon } from '../js/core/builtin.js';
 import { daysBetween, isoWeekday, monthsBetween, startOfWeek, toISO } from '../js/core/dates.js';
 import {
   CATEGORIES, EQUIPMENT, MUSCLE_GROUPS, newPlan, newPlanDay, newBlock, newSlot, newSetLog, slotsOf,
@@ -98,6 +98,15 @@ test('built-in content is complete and consistent', () => {
     assert.ok(named(name), `icon mapped for unknown exercise ${name}`);
     assert.ok(existsSync(new URL(`../img/exercises/${icon}.png`, import.meta.url)), `missing ${icon}.png`);
   }
+  // A picture is drawn as a two-layer figure exactly when its file is one:
+  // twice as wide as high (a PNG states its size in bytes 16-23). Drawing a
+  // square pictogram as a figure, or the reverse, shows half a picture.
+  for (const icon of Object.values(ICON_MAP)) {
+    const header = readFileSync(new URL(`../img/exercises/${icon}.png`, import.meta.url));
+    const wide = header.readUInt32BE(16) === 2 * header.readUInt32BE(20);
+    assert.equal(isFigureIcon(icon), wide, `${icon}: run "npm run shell"`);
+  }
+  assert.ok(isFigureIcon(ICON_MAP.Squat) && !isFigureIcon(null));
   const [home, beginner, mobility] = builtInPlans();
   assert.equal(home.days.length, 7);
   assert.equal(beginner.days.length, 28);

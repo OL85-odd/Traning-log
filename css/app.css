@@ -32,6 +32,8 @@
   --sand: #c9a87e;     /* warm highlight */
   --purple: #b87e9e;   /* yoga / stretch */
   --red: #c97e7e;      /* warning, HIIT */
+  --figure: #d8cfc0;   /* the body in an exercise picture */
+  --muscle: #ec5140;   /* the muscles that work */
   color-scheme: dark;
 
   --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
@@ -70,6 +72,8 @@
   --sand: #9a6a2c;
   --purple: #94527a;
   --red: #b34a4a;
+  --figure: #4b4238;
+  --muscle: #d63a2b;
   color-scheme: light;
 }
 @media (prefers-color-scheme: light) {
@@ -94,6 +98,8 @@
     --sand: #9a6a2c;
     --purple: #94527a;
     --red: #b34a4a;
+    --figure: #4b4238;
+    --muscle: #d63a2b;
     color-scheme: light;
   }
 }
@@ -295,12 +301,26 @@ h1, h2, h3, p { margin: 0; }
 .ex-icon.on-bg { background: var(--bg); }
 .ex-icon.bare { border: 0; }
 .ex-icon.plain { border: 0; background: none; }
-/* The pictogram files are white shapes on transparent. Drawing them as a
-   mask lets one file take any colour — the category's — in either theme. */
+/* An exercise picture is one file, twice as wide as high: the whole figure
+   in the left half, its working muscles in the right half, both as white
+   shapes on transparent. Drawn as masks, the halves take the theme's
+   colours: the figure neutral, the muscles red on top of it. */
+/* (Exercises not redrawn yet still have a one-colour pictogram: one mask,
+   in the category's colour.) */
 .ex-glyph {
-  display: block; background: currentColor;
+  display: block; flex: none; background: currentColor;
   -webkit-mask: center / contain no-repeat; mask: center / contain no-repeat;
 }
+.ex-figure { position: relative; display: block; flex: none; }
+.ex-figure i {
+  position: absolute; inset: 0;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  -webkit-mask-size: 200% 100%; mask-size: 200% 100%;
+}
+.ex-figure .body { background: var(--figure); -webkit-mask-position: 0 0; mask-position: 0 0; }
+.ex-figure .muscle { background: var(--muscle); -webkit-mask-position: 100% 0; mask-position: 100% 0; }
+.figure-stage { display: grid; place-items: center; padding: 8px 0 4px; }
+.legend-dot { display: inline-block; width: 8px; height: 8px; border-radius: 4px; background: var(--muscle); margin-right: 6px; }
 button.ex-icon:active { opacity: 0.6; }
 .ex-icon img { display: block; object-fit: contain; }
 
@@ -677,4 +697,4 @@ button.list-row:active { background: var(--press); }
 
 /* Session — an exercise within a round */
 .round-row + .round-row { border-top: 1px solid var(--border); margin-top: 6px; }
-.round-row .set-row { padding-left: calc(var(--gutter) + 44px); }
+.round-row .set-row { padding-left: calc(var(--gutter) + 54px); }

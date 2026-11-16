@@ -32,7 +32,7 @@ js/core/                Ren logikk — ingen DOM. Kjører og testes i Node
   builtin.js              Gjør dataene under til bibliotek og planmaler
   data/exercises.js       253 øvelser: tekst, kategori, utstyr, nivå, tier
   data/plans.js           14 planmaler, skrevet med øvelsesnavn
-  data/icons.js           Hvilke piktogrammer som finnes (skrives av `npm run shell`)
+  data/icons.js           Hvilke øvelsesbilder som finnes (skrives av `npm run shell`)
   dates.js                Kalenderregning (det appen bruker av Calendar)
   planResolver.js         Hvilken plandag gjelder en gitt dato
   progression.js          +2,5 % per måned
@@ -55,9 +55,9 @@ js/ui/                  Skjermene
   settings.js             Innstillinger, eksport og import
 
 js/vendor/preact-htm.js Preact + htm (13 kB), lagt inn som fil
-img/exercises/          Piktogrammene: hvite former med gjennomsiktig bakgrunn.
-                        Tegnes som maske og får kategoriens farge i begge temaer
-tools/                  make-icons.py og draw-icons.py (piktogrammer), shell.mjs (fillister)
+img/exercises/          Øvelsesbildene: figur + røde muskler som to masker i én fil.
+                        Tegnes som masker, så fargene følger temaet
+tools/                  make-icons.py (øvelsesbildene), shell.mjs (fillister)
 sw.js                   Offline-cache for appfilene
 tests/                  Tester for js/core og for sw.js
 arkiv/                  Den gamle treningsloggen som lå her før
@@ -200,27 +200,44 @@ dataendring den dagen det trengs.
 Endre `tier` direkte i `js/core/data/exercises.js` eller `data/plans.js` for
 å flytte noe.
 
-## Piktogrammene
+## Øvelsesbildene
 
-Alle 253 øvelser har et piktogram i `img/exercises/`. De kommer fra to
-verktøy som skriver samme slags fil (256 px, tegningen ligger i
-alfakanalen, så appen kan farge den etter kategori og tema):
+Hver av de 253 øvelsene har et bilde i `img/exercises/`. Det finnes to
+slag, og appen tegner begge (`npm run shell` skriver lista over hvilke som er
+hva til `js/core/data/icons.js`):
 
-| Verktøy | Hvordan | Brukes til |
-|---|---|---|
-| `tools/make-icons.py` | Gemini sitt bilde-API tegner ut fra én setning per øvelse i `tools/icon-prompts.json` | De 174 første. Koster penger per bilde og må ses over: modellen tegner av og til to hoder, en ramme eller feil øvelse |
-| `tools/draw-icons.py` | Figuren bygges av «kapsler» og poseres med tall (vinkler eller punkter hender og føtter skal nå), se `tools/pictogram.py` | De 79 som modellen tegnet feil eller aldri rakk. Gratis, og samme resultat hver gang |
+- **Figur med muskler** (68 så langt): en silhuett av utøveren, med musklene
+  som gjør jobben i rødt. Vises stort øverst i øvelsesarket.
+- **Ensfarget piktogram** (de 185 andre): forrige generasjon, én maske i
+  kategoriens farge. Byttes ut etter hvert som `make-icons.py` kjøres;
+  `tools/draw-icons.py` og `tools/pictogram.py` tegnet 79 av dem med kode og
+  kan slettes når alle er figurer.
+
+`tools/make-icons.py` lar
+Gemini sitt bilde-API tegne dem ut fra `tools/icon-prompts.json`, som per
+øvelse har én setning om stillingen (`prompt`) og hvilke muskler som skal
+være røde (`muscles`).
+
+Modellen tegner hvit figur med røde muskler på svart. Skriptet gjør det om
+til én fil per øvelse på 512 × 256 px: venstre halvdel er hele figuren,
+høyre halvdel bare de røde feltene, begge som alfamaske. Appen legger de to
+halvdelene oppå hverandre (`ExerciseFigure` i `js/ui/common.js`) og farger
+dem med `--figure` og `--muscle`, så samme fil virker i lyst og mørkt tema.
 
 ```sh
-python3 tools/draw-icons.py deadlift   # tegn én på nytt etter å ha endret posen
-python3 tools/make-icons.py            # modellen tegner de som mangler (trenger GEMINI_API_KEY)
-npm run shell                          # forteller appen hvilke som finnes
+python3 tools/make-icons.py                 # tegner de som mangler eller fortsatt er piktogram (trenger GEMINI_API_KEY)
+python3 tools/make-icons.py deadlift squat  # tegner disse på nytt
+npm run shell                               # forteller appen hvilke som finnes
 ```
 
-`make-icons.py` rører ikke en øvelse som har en pose i `draw-icons.py`, heller
-ikke med `--force`. Ny øvelse: legg til en pose (kopier en som ligner), eller
-en setning i `icon-prompts.json`. En øvelse uten bilde viser kategoriens
-symbol.
+Svarer API-et 429 «monthly spending cap», har prosjektet nådd utgiftstaket
+sitt i AI Studio: hev taket eller vent, og kjør skriptet igjen — det
+fortsetter der det slapp.
+
+Hvert bilde koster penger og må ses over: modellen tegner av og til feil
+stilling, feil muskel, en ramme eller to personer. `tools/icon-originals/`
+(ikke sjekket inn) beholder det modellen leverte. En øvelse uten bilde viser
+kategoriens symbol.
 
 ## Kjente begrensninger
 
