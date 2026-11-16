@@ -183,6 +183,9 @@ export function defaultSettings() {
     // Web additions: 'system' | 'dark' | 'light', and which built-in content
     // this device has already been given (see store.js).
     theme: 'system', contentVersion: 0,
+    // How a session is laid out: 'rounds' (a set of every exercise, then the
+    // next round) or 'exercises' (all sets of one exercise, then the next).
+    sessionOrder: 'rounds',
   };
 }
 

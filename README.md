@@ -57,7 +57,7 @@ js/ui/                  Skjermene
 js/vendor/preact-htm.js Preact + htm (13 kB), lagt inn som fil
 img/exercises/          Piktogrammene: hvite former med gjennomsiktig bakgrunn.
                         Tegnes som maske og får kategoriens farge i begge temaer
-tools/                  make-icons.py (tegner piktogrammer), shell.mjs (fillister)
+tools/                  make-icons.py og draw-icons.py (piktogrammer), shell.mjs (fillister)
 sw.js                   Offline-cache for appfilene
 tests/                  Tester for js/core og for sw.js
 arkiv/                  Den gamle treningsloggen som lå her før
@@ -202,19 +202,25 @@ Endre `tier` direkte i `js/core/data/exercises.js` eller `data/plans.js` for
 
 ## Piktogrammene
 
-`tools/make-icons.py` tegner ett piktogram per øvelse med Gemini sitt
-bilde-API, ut fra én setning per øvelse i `tools/icon-prompts.json`.
-150 av 253 er tegnet. Resten viser kategoriens symbol til de er laget:
+Alle 253 øvelser har et piktogram i `img/exercises/`. De kommer fra to
+verktøy som skriver samme slags fil (256 px, tegningen ligger i
+alfakanalen, så appen kan farge den etter kategori og tema):
+
+| Verktøy | Hvordan | Brukes til |
+|---|---|---|
+| `tools/make-icons.py` | Gemini sitt bilde-API tegner ut fra én setning per øvelse i `tools/icon-prompts.json` | De 174 første. Koster penger per bilde og må ses over: modellen tegner av og til to hoder, en ramme eller feil øvelse |
+| `tools/draw-icons.py` | Figuren bygges av «kapsler» og poseres med tall (vinkler eller punkter hender og føtter skal nå), se `tools/pictogram.py` | De 79 som modellen tegnet feil eller aldri rakk. Gratis, og samme resultat hver gang |
 
 ```sh
-python3 tools/make-icons.py     # tegner de som mangler (trenger GEMINI_API_KEY)
-npm run shell                   # forteller appen hvilke som finnes
+python3 tools/draw-icons.py deadlift   # tegn én på nytt etter å ha endret posen
+python3 tools/make-icons.py            # modellen tegner de som mangler (trenger GEMINI_API_KEY)
+npm run shell                          # forteller appen hvilke som finnes
 ```
 
-Fem ble forkastet ved gjennomsyn (ramme, tekst eller to personer i bildet) og
-står blant de som mangler: assisted pistol squat, back lever, sled push,
-dumbbell Romanian deadlift og cossack squat. Se over nye bilder før de
-sjekkes inn.
+`make-icons.py` rører ikke en øvelse som har en pose i `draw-icons.py`, heller
+ikke med `--force`. Ny øvelse: legg til en pose (kopier en som ligner), eller
+en setning i `icon-prompts.json`. En øvelse uten bilde viser kategoriens
+symbol.
 
 ## Kjente begrensninger
 

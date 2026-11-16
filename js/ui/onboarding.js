@@ -6,6 +6,7 @@ import { CATEGORIES, DAY_TYPES, WEEKDAY_NAMES, slotsOf } from '../core/models.js
 import { daysPerWeek, recommendPlans } from '../core/recommend.js';
 import { ExerciseIcon, Portal, slotDescription, store } from './common.js';
 import { Icon } from './icons.js';
+import { CreatePlanSheet } from './planPicker.js';
 
 const FOCUS = [
   { id: 'calisthenics', label: 'Bodyweight strength', hint: 'Push-ups, squats, pull-ups — no weights needed', icon: 'figure', color: 'sand' },
@@ -29,6 +30,7 @@ export function Onboarding() {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState({ focus: null, equipment: [], days: 3 });
   const [choice, setChoice] = useState(0); // which of the suggestions is picked
+  const [building, setBuilding] = useState(false); // the "build your own" sheet is up
   const name = STEPS[step];
 
   const finish = () => store.updateSettings({ onboardingCompleted: true });
@@ -45,12 +47,18 @@ export function Onboarding() {
     next();
   };
 
+  // A plan built from the guide starts today, like a suggested one would.
+  const startOwnPlan = own => {
+    store.setActivePlan(own, { restart: true });
+    setStep(STEPS.indexOf('tour'));
+  };
+
   const toggleKit = id => setAnswers({
     ...answers,
     equipment: answers.equipment.includes(id) ? answers.equipment.filter(k => k !== id) : [...answers.equipment, id],
   });
 
-  let body, primary;
+  let body, primary, secondary;
   if (name === 'welcome') {
     body = html`
       <div class="ob-hero">
@@ -109,8 +117,9 @@ export function Onboarding() {
       ${suggestions.length > 1 && html`<div class="chip-row" style="padding:0 0 12px;margin:0 calc(-1 * var(--gutter))">
         ${suggestions.map((s, i) => html`<button class="chip ${i === choice ? 'selected' : ''}" onClick=${() => setChoice(i)}>${s.name}</button>`)}
       </div>`}
-      <${PlanPreview} plan=${plan} />` : html`${heading('No plan fits yet', 'You can build your own from the Plan tab.')}`;
+      <${PlanPreview} plan=${plan} />` : html`${heading('No plan fits yet', 'Build your own below, or skip and do it later from the Plan tab.')}`;
     primary = { label: plan ? 'START THIS PLAN' : 'CONTINUE', onClick: startPlan };
+    secondary = { label: 'Build your own plan instead', onClick: () => setBuilding(true) };
   } else {
     body = html`
       ${heading('How it works', 'Three things worth knowing before you start.')}
@@ -133,8 +142,10 @@ export function Onboarding() {
       <div class="sheet-body"><div class="ob-body">${body}</div></div>
       <div class="ob-foot">
         <button class="btn-primary" disabled=${primary.disabled} onClick=${primary.onClick}>${primary.label}</button>
+        ${secondary && html`<button class="link ob-second" onClick=${secondary.onClick}>${secondary.label}</button>`}
       </div>
     </div>
+    ${building && html`<${CreatePlanSheet} onClose=${() => setBuilding(false)} onCreated=${startOwnPlan} />`}
   <//>`;
 }
 

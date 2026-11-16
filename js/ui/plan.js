@@ -110,25 +110,33 @@ function ProgressDrawer({ plan }) {
   // The overall score compares against rising targets, so it only exists
   // while automatic progression is on. Per-exercise charts always do.
   const overall = overallSeries(plan, startDate, sessions);
+  // A tab per exercise of the plan — also before it has been logged, so the
+  // drawer shows what it is going to follow — then anything else with numbers.
   const exercises = chartableExercises(plan, store.state.exercises, sessions)
     .map(exercise => ({ exercise, series: seriesFor(exercise, plan, startDate, sessions) }))
-    .filter(entry => entry.series?.points.length > 0);
+    .filter(entry => entry.series);
 
   const tabs = [
     ...(overall?.points.length ? [{ id: 'overall', label: 'OVERALL', series: overall }] : []),
-    ...exercises.map(({ exercise, series }) => ({ id: exercise.id, label: exercise.name.toUpperCase(), series })),
+    ...exercises.map(({ exercise, series }) => ({ id: exercise.id, label: exercise.name.toUpperCase(), name: exercise.name, series })),
   ];
-  const tab = tabs.find(t => t.id === picked) ?? tabs[0];
+  const count = t => t.series.points.length;
+  // Opens on the tab with most to show: a line, else a first number, else the first.
+  const tab = tabs.find(t => t.id === picked)
+    ?? tabs.find(t => count(t) > 1) ?? tabs.find(t => count(t) > 0) ?? tabs[0];
+  const logged = tabs.filter(t => t.id !== 'overall' && count(t) > 0).length;
 
   if (!expanded) {
     return html`<div class="drawer">
       <button class="drawer-teaser" onClick=${() => setExpanded(true)} aria-expanded="false">
-        ${tab
+        ${tab && count(tab) > 1
           ? html`<div style="width:48px"><${ProgressChart} series=${tab.series} compact /></div>
                  <span class="mono t-caption c-subtle truncate">${tab.id === 'overall' ? 'Progress' : tab.label}</span>
                  <${TrendLabel} series=${tab.series} />`
           : html`<${Icon} name="trend" size=${13} class="c-subtle" />
-                 <span class="mono t-caption c-subtle">Progress — fills in as you log numbers</span>`}
+                 <span class="mono t-caption c-subtle truncate">${logged > 0
+                   ? `Progress · ${logged} ${logged === 1 ? 'exercise' : 'exercises'} logged once`
+                   : 'Progress — fills in as you log numbers'}</span>`}
         <span class="spacer"></span>
         <${Icon} name="chevron-down" size=${12} weight=${2.4} class="c-subtle" />
       </button>
@@ -137,6 +145,10 @@ function ProgressDrawer({ plan }) {
 
   const unit = tab && seriesUnit(tab.series);
   const hasTarget = tab?.series.currentTarget != null;
+  const points = tab?.series.points ?? [];
+  const latest = points[points.length - 1];
+  const best = points.length ? Math.max(...points.map(p => p.actual)) : null;
+  const value = v => (tab.id === 'overall' ? unit.show(v) : `${unit.show(v)} ${unit.name}`);
 
   return html`<div class="drawer">
     <div class="chip-row" style="padding-top:14px;gap:6px">
@@ -150,13 +162,30 @@ function ProgressDrawer({ plan }) {
             <span class="spacer"></span>
             <${TrendLabel} series=${tab.series} small />
           </div>
-          <div class="card chart-box"><${ProgressChart} series=${tab.series} unit=${unit} /></div>
-          <div class="row label" style="gap:14px;letter-spacing:0">
-            ${hasTarget && html`<span class="row" style="gap:5px">
-              <i class="legend-line dashed"></i>TARGET · NOW ${unit.show(tab.series.currentTarget)}
-            </span>`}
-            <span class="row" style="gap:5px"><i class="legend-line"></i>${hasTarget ? 'ACTUAL' : 'WHAT YOU DID'}</span>
-          </div>
+          ${points.length > 1
+            ? html`<div class="card chart-box"><${ProgressChart} series=${tab.series} unit=${unit} /></div>
+                <div class="row label" style="gap:14px;letter-spacing:0">
+                  ${hasTarget && html`<span class="row" style="gap:5px">
+                    <i class="legend-line dashed"></i>TARGET · NOW ${unit.show(tab.series.currentTarget)}
+                  </span>`}
+                  <span class="row" style="gap:5px"><i class="legend-line"></i>${hasTarget ? 'ACTUAL' : 'WHAT YOU DID'}</span>
+                </div>`
+            // One number is not a trend, and none is nothing: say so in words
+            // instead of drawing a lone dot in an empty box.
+            : html`<div class="card chart-box chart-empty">
+                ${latest
+                  ? html`<div class="t-title3">${value(latest.actual)}</div>
+                      <div class="mono t-caption c-subtle">Logged once, ${format.mediumDate(latest.date)}.</div>
+                      <div class="mono t-caption c-subtle">The line starts the second time you log ${tab.name ?? 'a session'}.</div>`
+                  : html`<div class="mono t-caption c-subtle">Not logged yet.</div>
+                      <div class="mono t-caption c-subtle">Finish a session with ${tab.name} and its first number lands here.</div>`}
+              </div>`}
+          ${points.length > 1 && html`<div class="chart-facts">
+            <div><span class="label">Sessions</span><span class="mono t-sub">${points.length}</span></div>
+            <div><span class="label">First</span><span class="mono t-sub">${value(points[0].actual)}</span></div>
+            <div><span class="label">Best</span><span class="mono t-sub">${value(best)}</span></div>
+            <div><span class="label">Latest</span><span class="mono t-sub">${value(latest.actual)}</span></div>
+          </div>`}
         </div>`
       : html`<p class="mono t-caption c-subtle" style="padding:16px var(--gutter) 0;line-height:1.45">
           Nothing to chart yet. It fills in as you finish sessions.

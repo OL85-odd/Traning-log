@@ -10,7 +10,7 @@ import {
   LIMITS, UNIT_LABELS, countUnit, formatWeight, intervalSteps, isInvalid, parseDecimal, parseWhole,
   secondsToUnit, setCount, timeUnit, tracksCount, tracksWeight, trimNumber, unitToSeconds, weightToKg,
 } from '../core/units.js';
-import { Alert, Cover, DayTypeLabel, ExerciseIcon, Portal, describeSets, store } from './common.js';
+import { Alert, Chip, Cover, DayTypeLabel, ExerciseIcon, Portal, describeSets, store } from './common.js';
 import { Icon } from './icons.js';
 import { ExerciseInfoButton, ExerciseInfoSheet } from './library.js';
 import { IntervalTimer } from './timer.js';
@@ -79,6 +79,24 @@ export function ActiveSessionView() {
     setRevision(revision + 1);
   };
 
+  // MARK: Order
+
+  // Every slot of the day with its exercise, in plan order.
+  const slots = (planDay?.blocks ?? [])
+    .flatMap(block => block.exercises)
+    .map(slot => ({ slot, exercise: store.exerciseByID(slot.exerciseID) }))
+    .filter(entry => entry.exercise);
+  const rounds = Math.max(0, ...slots.map(entry => setCount(entry.slot)));
+  // "Round by round" does set 1 of every exercise, then set 2, and so on;
+  // "exercise by exercise" finishes one exercise before the next. It only
+  // matters — and is only offered — when there is more than one of each.
+  const canReorder = slots.length > 1 && rounds > 1;
+  const byRound = canReorder && (store.state.settings.sessionOrder ?? 'rounds') === 'rounds';
+
+  const timeSet = (slot, exercise) => (isEditing ? null : round => setTimer([{
+    kind: 'work', seconds: slot.targetDurationSeconds, slot, exercise, round, rounds: setCount(slot),
+  }]));
+
   return html`
     <${Cover}
       title=${!isToday ? format.mediumDate(session.date) : isEditing ? 'Edit Session' : 'Active Session'}
@@ -107,22 +125,29 @@ export function ActiveSessionView() {
           </p>`}
         </div>`}
 
-        ${hasBlocks
-          ? planDay.blocks.map(block => html`<div key=${block.id} class="col" style="gap:12px">
+        ${canReorder && html`<div class="row" style="gap:8px;padding:0 var(--gutter)">
+          <${Chip} label="Round by round" selected=${byRound} onClick=${() => store.updateSettings({ sessionOrder: 'rounds' })} />
+          <${Chip} label="Exercise by exercise" selected=${!byRound} onClick=${() => store.updateSettings({ sessionOrder: 'exercises' })} />
+        </div>`}
+
+        ${!hasBlocks
+          ? html`<div class="col" style="gap:12px;padding:0 var(--gutter)">
+              <p class="t-sub c-subtle">Nothing is planned for this day. Finish to log that you trained.</p>
+            </div>`
+          : byRound
+          ? Array.from({ length: rounds }, (_, i) => i + 1).map(round => html`<${RoundCard} key=${`${round}-${revision}`}
+              round=${round} rounds=${rounds} slots=${slots.filter(entry => round <= setCount(entry.slot))}
+              session=${session} onSetDone=${startRest} timeSet=${timeSet} />`)
+          : planDay.blocks.map(block => html`<div key=${block.id} class="col" style="gap:12px">
               ${block.blockName && block.blockName !== title
                 && html`<div class="caption" style="padding:0 var(--gutter)">${block.blockName}</div>`}
               ${block.exercises.map(slot => {
                 const exercise = store.exerciseByID(slot.exerciseID);
                 return exercise && html`<${ExerciseSlot} key=${`${slot.id}-${revision}`} slot=${slot} exercise=${exercise}
                   session=${session} onSetDone=${() => startRest(slot.restSeconds)}
-                  onTimeSet=${isEditing ? null : round => setTimer([{
-                    kind: 'work', seconds: slot.targetDurationSeconds, slot, exercise, round, rounds: setCount(slot),
-                  }])} />`;
+                  onTimeSet=${timeSet(slot, exercise)} />`;
               })}
-            </div>`)
-          : html`<div class="col" style="gap:12px;padding:0 var(--gutter)">
-              <p class="t-sub c-subtle">Nothing is planned for this day. Finish to log that you trained.</p>
-            </div>`}
+            </div>`)}
       </div>
       ${rest && !timer && html`<${RestBar} key=${rest.endsAt} rest=${rest} onDone=${() => setRest(null)} />`}
     <//>
@@ -148,6 +173,51 @@ export function ActiveSessionView() {
         { label: 'Keep logging', role: 'cancel', onClick: () => setConfirm(null) },
         { label: 'Discard', role: 'destructive', onClick: () => { setConfirm(null); store.cancelSession(); } },
       ]} />`}`;
+}
+
+// MARK: - One round: a set of every exercise
+
+/// "Round 2 of 3": one set of each exercise, top to bottom, with the rest
+/// countdown after each. An exercise with fewer sets drops out of the later rounds.
+function RoundCard({ round, rounds, slots, session, onSetDone, timeSet }) {
+  const done = slots.filter(({ exercise }) =>
+    session.sets.some(s => s.exerciseID === exercise.id && s.setNumber === round && s.isCompleted)).length;
+
+  return html`<div class="card slot-card col" style="gap:4px">
+    <div class="row" style="padding:0 var(--gutter) 6px">
+      <span class="caption">Round ${round} of ${rounds}</span>
+      <span class="spacer"></span>
+      <span class="mono t-caption ${done === slots.length ? 'c-green' : 'c-subtle'}">${done}/${slots.length}</span>
+    </div>
+    ${slots.map(({ slot, exercise }) => html`<${RoundRow} key=${slot.id} slot=${slot} exercise=${exercise}
+      round=${round} session=${session} onDone=${() => onSetDone(slot.restSeconds)}
+      onTimer=${slot.targetDurationSeconds != null ? timeSet(slot, exercise) : null} />`)}
+  </div>`;
+}
+
+/// One exercise within a round: its name, then the same fields and tick as
+/// in the exercise-by-exercise layout.
+function RoundRow({ slot, exercise, round, session, onDone, onTimer }) {
+  const [showInfo, setShowInfo] = useState(false);
+  const existing = session.sets.find(s => s.exerciseID === exercise.id && s.setNumber === round);
+  // What was done last time is worth seeing once, at the top.
+  const last = round === 1 ? store.lastPerformance(exercise.id, session.id) : null;
+
+  return html`<div class="round-row">
+    <div class="row" style="gap:10px;padding:6px var(--gutter) 0">
+      <${ExerciseIcon} exercise=${exercise} box=${34} img=${26} radius=${8} variant="on-bg"
+        label="About ${exercise.name}" onClick=${() => setShowInfo(true)} />
+      <div style="flex:1;min-width:0">
+        <div class="t-sub medium truncate">${exercise.name}</div>
+        ${last && html`<div class="mono t-caption2 c-subtle truncate">
+          Last time · ${describeSets(last.sets, slot, store.state.settings.preferredUnit)}
+        </div>`}
+      </div>
+    </div>
+    <${SetRow} setNumber=${round} slot=${slot} exercise=${exercise} existing=${existing}
+      onDone=${onDone} onTimer=${onTimer ? () => onTimer(round) : null} hideNumber />
+    ${showInfo && html`<${ExerciseInfoSheet} exercise=${exercise} onClose=${() => setShowInfo(false)} />`}
+  </div>`;
 }
 
 // MARK: - One exercise with its set rows
@@ -182,7 +252,7 @@ function ExerciseSlot({ slot, exercise, session, onSetDone, onTimeSet }) {
   </div>`;
 }
 
-function SetRow({ setNumber, slot, exercise, existing, onDone, onTimer }) {
+function SetRow({ setNumber, slot, exercise, existing, onDone, onTimer, hideNumber }) {
   const weightUnit = store.state.settings.preferredUnit;
   const time = timeUnit(slot);
 
@@ -253,7 +323,7 @@ function SetRow({ setNumber, slot, exercise, existing, onDone, onTimer }) {
   </label>`;
 
   return html`<div class="set-row">
-    <span class="set-num">${setNumber}</span>
+    ${!hideNumber && html`<span class="set-num">${setNumber}</span>`}
     ${hasCount && field('count', UNIT_LABELS[countUnit(slot)], parsed.count, 'numeric')}
     ${hasWeight && field('weight', weightUnit, parsed.weightKg, 'decimal')}
     ${hasTime && field('time', UNIT_LABELS[time], parsed.seconds, 'decimal')}

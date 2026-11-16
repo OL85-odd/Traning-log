@@ -15,12 +15,14 @@ takes the category colour in both the light and the dark theme.
 
 The model sometimes adds a frame, lettering or a second person. Look the
 results over (they are small files — a contact sheet is quick to make) and
-redraw the odd one by name.
+redraw the odd one by name — or pose it by hand in tools/draw-icons.py,
+which this script then leaves alone.
 """
 import base64
 import io
 import json
 import os
+import re
 import sys
 import time
 import urllib.request
@@ -40,6 +42,7 @@ STYLE = (
     'Pure black background. Only two colours in the whole image: white and black. '
     'No outline strokes, no shading, no gradients, no shadows, no face, no fingers, no text, no letters, '
     'no arrows, no motion lines, no border, no frame. '
+    'Exactly one person: one head, one torso, two arms, two legs. The head is one solid filled circle. '
     'One figure only, centred, filling about 80 percent of a square image, with empty black margin on all sides.'
 )
 
@@ -112,6 +115,13 @@ def main():
     if names:
         jobs = [job for job in jobs if job['slug'] in names]
         force = True
+    else:
+        # The ones posed by hand in draw-icons.py belong to that script.
+        posed = set()
+        for line in open(os.path.join(here, 'draw-icons.py')):
+            if line.startswith('@pose('):
+                posed.update('exercise-' + name for name in re.findall(r"'([^']+)'", line))
+        jobs = [job for job in jobs if job['slug'] not in posed]
     out_dir = os.path.join(here, '..', 'img', 'exercises')
     raw_dir = os.path.join(here, 'icon-originals')   # what the model returned; not part of the app
     os.makedirs(raw_dir, exist_ok=True)

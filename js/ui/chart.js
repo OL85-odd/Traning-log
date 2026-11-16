@@ -14,8 +14,11 @@ export function seriesUnit(series) {
   switch (series.kind) {
     case 'weight':   return { name: weightUnit, show: v => formatWeight(v, weightUnit) };
     case 'reps':     return { name: 'reps', show: v => trimNumber(v) };
+    // Minutes for long efforts, and for shorter ones logged in whole minutes
+    // (a 5 minute stretch reads "5 min", not "300 sec").
     case 'duration': return series.points.some(p => p.actual >= 600)
-      ? { name: 'min', show: v => trimNumber(v / 60) }
+      || (series.points.length > 0 && series.points.every(p => p.actual >= 60 && p.actual % 60 === 0))
+      ? { name: 'min', show: v => trimNumber(Math.round(v / 6) / 10) }
       : { name: 'sec', show: v => trimNumber(v) };
     default:         return { name: 'score', show: v => String(Math.round(v)) };
   }
