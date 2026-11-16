@@ -96,22 +96,74 @@ export function setCount(slot) {
   return Math.max(1, slot.targetSets ?? 1);
 }
 
+const LOADED = new Set(['dumbbells', 'kettlebell', 'barbell', 'cable', 'machine', 'ball', 'sled']);
+
 /// Whether logging this slot offers a weight field: when the plan sets a
-/// weight, or for rep-based strength work where adding load is the norm.
-/// A plank or a run has no use for one.
+/// weight, or when the exercise is done with a load. A plank, a push-up or
+/// a run has no use for one.
 export function tracksWeight(slot, exercise) {
   if (slot.targetWeightKg != null) return true;
+  if (LOADED.has(exercise?.equipment)) return true;
   return exercise?.category === 'strength' && slot.targetReps != null;
+}
+
+/// Whether logging this slot offers a count field ("reps"): when the plan
+/// sets one, and for interval work, where you do as many as the clock allows
+/// and note the number afterwards.
+export function tracksCount(slot, exercise) {
+  return slot.targetReps != null || exercise?.category === 'hiit';
+}
+
+/// Sensible starting target for a quick session of `exercise`:
+/// { reps, sets } for things you count, { minutes } for things you time.
+export function defaultQuickTarget(exercise) {
+  if (exercise?.tracking === 'reps' && exercise.category !== 'cardio') {
+    return { reps: exercise.category === 'strength' ? 10 : 12, sets: 1, minutes: 5 };
+  }
+  return { reps: null, sets: null, minutes: exercise?.category === 'cardio' ? 20 : 5 };
+}
+
+/// "12 reps", "3 × 12 reps", "5 min" — what a quick session card says.
+export function quickTargetLabel(quick) {
+  if (quick.reps != null) return `${quick.sets > 1 ? `${quick.sets} × ` : ''}${quick.reps} reps`;
+  return `${quick.minutes} min`;
 }
 
 /// Sensible starting targets when an exercise is added to a plan day.
 export function defaultTargets(exercise) {
   switch (exercise?.category) {
     case 'cardio':   return { targetDurationSeconds: 20 * 60, unit2: 'Min' };
-    case 'mobility': return { targetSets: 2, targetDurationSeconds: 45 };
-    case 'hiit':     return { targetSets: 3, targetDurationSeconds: 30 };
-    default:         return { targetSets: 3, targetReps: 10 };
+    case 'hiit':     return { targetSets: 3, targetDurationSeconds: 30, restSeconds: 15 };
+    case 'yoga':
+    case 'mobility':
+      return exercise.tracking === 'reps'
+        ? { targetSets: 1, targetReps: 10 }
+        : { targetSets: 2, targetDurationSeconds: 45, restSeconds: 10 };
+    default:
+      return exercise?.tracking === 'time'
+        ? { targetSets: 3, targetDurationSeconds: 30 }
+        : { targetSets: 3, targetReps: 10 };
   }
+}
+
+// MARK: - Interval timer
+
+/// The steps of a circuit: round 1 of every timed slot in order, then round
+/// 2, and so on — work, then that slot's rest. The last rest is left out.
+/// Each step is { kind: 'work' | 'rest', seconds, slot, round, rounds }.
+export function intervalSteps(planDay) {
+  const slots = (planDay?.blocks ?? []).flatMap(b => b.exercises).filter(s => s.targetDurationSeconds != null);
+  const rounds = Math.max(0, ...slots.map(setCount));
+  const steps = [];
+  for (let round = 1; round <= rounds; round++) {
+    for (const slot of slots) {
+      if (round > setCount(slot)) continue;
+      steps.push({ kind: 'work', seconds: slot.targetDurationSeconds, slot, round, rounds: setCount(slot) });
+      if (slot.restSeconds > 0) steps.push({ kind: 'rest', seconds: slot.restSeconds, slot, round, rounds: setCount(slot) });
+    }
+  }
+  if (steps.length && steps[steps.length - 1].kind === 'rest') steps.pop();
+  return steps;
 }
 
 /// Rough minutes a plan day takes: the work itself plus the rest after each set.

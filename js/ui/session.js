@@ -7,16 +7,20 @@ import { DAY_TYPES, newSetLog } from '../core/models.js';
 import { plannedSetCount } from '../core/planResolver.js';
 import { isQuickSession } from '../core/store.js';
 import {
-  LIMITS, UNIT_LABELS, countUnit, formatWeight, isInvalid, parseDecimal, parseWhole, secondsToUnit,
-  setCount, timeUnit, tracksWeight, trimNumber, unitToSeconds, weightToKg,
+  LIMITS, UNIT_LABELS, countUnit, formatWeight, intervalSteps, isInvalid, parseDecimal, parseWhole,
+  secondsToUnit, setCount, timeUnit, tracksCount, tracksWeight, trimNumber, unitToSeconds, weightToKg,
 } from '../core/units.js';
-import { Alert, Cover, DayTypeLabel, ExerciseIcon, describeSets, store } from './common.js';
+import { Alert, Cover, DayTypeLabel, ExerciseIcon, Portal, describeSets, store } from './common.js';
 import { Icon } from './icons.js';
-import { ExerciseInfoButton } from './library.js';
+import { ExerciseInfoButton, ExerciseInfoSheet } from './library.js';
+import { IntervalTimer } from './timer.js';
 
 export function ActiveSessionView() {
   const [confirm, setConfirm] = useState(null); // 'finish' | 'discard'
   const [rest, setRest] = useState(null);       // { endsAt, seconds }
+  const [timer, setTimer] = useState(null);     // steps for the interval timer, while it is up
+  // Bumped when the timer closes: the set rows are rebuilt from what it logged.
+  const [revision, setRevision] = useState(0);
   const session = store.state.activeSession;
   if (!session) return null;
 
@@ -42,6 +46,39 @@ export function ActiveSessionView() {
     if (isToday && !isEditing && seconds > 0) setRest({ endsAt: Date.now() + seconds * 1000, seconds });
   };
 
+  // MARK: Interval timer
+
+  // The whole day as a circuit: an interval day, or a timed quick session.
+  const withExercise = steps => steps
+    .map(step => ({ ...step, exercise: store.exerciseByID(step.slot.exerciseID) }))
+    .filter(step => step.exercise);
+  const circuit = withExercise(intervalSteps(planDay));
+  const isIntervalDay = planDay && ['hiit', 'interval'].includes(planDay.dayType);
+  const offersCircuit = !isEditing && circuit.length > 0 && (isIntervalDay || (isQuick && circuit.length === 1));
+  const circuitSeconds = circuit.reduce((sum, step) => sum + step.seconds, 0);
+
+  /// The timer ticks a work interval off as it ends, keeping any reps or
+  /// weight already typed for that set.
+  const logInterval = (step, seconds) => {
+    if (seconds < 3) return; // skipped before it began
+    const existing = store.state.activeSession?.sets.find(
+      s => s.exerciseID === step.slot.exerciseID && s.setNumber === step.round,
+    );
+    store.logSet(newSetLog({
+      exerciseID: step.slot.exerciseID,
+      setNumber: step.round,
+      repsCompleted: existing?.repsCompleted ?? null,
+      weightKg: existing?.weightKg ?? null,
+      durationSeconds: seconds,
+      isCompleted: true,
+    }));
+  };
+
+  const closeTimer = () => {
+    setTimer(null);
+    setRevision(revision + 1);
+  };
+
   return html`
     <${Cover}
       title=${!isToday ? format.mediumDate(session.date) : isEditing ? 'Edit Session' : 'Active Session'}
@@ -55,8 +92,20 @@ export function ActiveSessionView() {
             ${session.startedAt && !isEditing && html`<${ElapsedTime} startedAt=${session.startedAt} />`}
           </div>
           <h2 class="t-title2" style="margin-top:4px">${title}</h2>
-          ${planned > 0 && html`<div class="mono t-caption c-subtle" style="margin-top:4px">${done} of ${planned} ${planned === 1 ? 'set' : 'sets'} done</div>`}
+          ${planned > 0 && html`<div class="mono t-caption c-subtle" style="margin-top:4px">
+            ${done} of ${planned} ${planned === 1 ? 'set' : 'sets'} done
+          </div>`}
         </div>
+
+        ${offersCircuit && html`<div style="padding:0 var(--gutter)">
+          <button class="btn-primary" onClick=${() => setTimer(circuit)}>
+            <${Icon} name="timer" size=${17} weight=${2} />
+            ${circuit.length === 1 ? 'START TIMER' : 'START INTERVALS'} · ${format.clock(circuitSeconds)}
+          </button>
+          ${circuit.length > 1 && html`<p class="mono t-caption2 c-subtle" style="margin-top:8px;line-height:1.45">
+            Counts down each work and rest interval and ticks them off. Add reps or weight afterwards.
+          </p>`}
+        </div>`}
 
         ${hasBlocks
           ? planDay.blocks.map(block => html`<div key=${block.id} class="col" style="gap:12px">
@@ -64,16 +113,21 @@ export function ActiveSessionView() {
                 && html`<div class="caption" style="padding:0 var(--gutter)">${block.blockName}</div>`}
               ${block.exercises.map(slot => {
                 const exercise = store.exerciseByID(slot.exerciseID);
-                return exercise && html`<${ExerciseSlot} key=${slot.id} slot=${slot} exercise=${exercise}
-                  session=${session} onSetDone=${() => startRest(slot.restSeconds)} />`;
+                return exercise && html`<${ExerciseSlot} key=${`${slot.id}-${revision}`} slot=${slot} exercise=${exercise}
+                  session=${session} onSetDone=${() => startRest(slot.restSeconds)}
+                  onTimeSet=${isEditing ? null : round => setTimer([{
+                    kind: 'work', seconds: slot.targetDurationSeconds, slot, exercise, round, rounds: setCount(slot),
+                  }])} />`;
               })}
             </div>`)
           : html`<div class="col" style="gap:12px;padding:0 var(--gutter)">
               <p class="t-sub c-subtle">Nothing is planned for this day. Finish to log that you trained.</p>
             </div>`}
       </div>
-      ${rest && html`<${RestBar} key=${rest.endsAt} rest=${rest} onDone=${() => setRest(null)} />`}
+      ${rest && !timer && html`<${RestBar} key=${rest.endsAt} rest=${rest} onDone=${() => setRest(null)} />`}
     <//>
+
+    ${timer && html`<${Portal}><${IntervalTimer} steps=${timer} onWorkDone=${logInterval} onClose=${closeTimer} /><//>`}
 
     ${confirm === 'finish' && html`<${Alert}
       title="Finish session?"
@@ -98,7 +152,8 @@ export function ActiveSessionView() {
 
 // MARK: - One exercise with its set rows
 
-function ExerciseSlot({ slot, exercise, session, onSetDone }) {
+function ExerciseSlot({ slot, exercise, session, onSetDone, onTimeSet }) {
+  const [showInfo, setShowInfo] = useState(false);
   const logged = session.sets.filter(s => s.exerciseID === exercise.id);
   const sets = setCount(slot);
   const setNumbers = Array.from({ length: sets }, (_, i) => i + 1);
@@ -107,7 +162,8 @@ function ExerciseSlot({ slot, exercise, session, onSetDone }) {
 
   return html`<div class="card slot-card col" style="gap:8px">
     <div class="row" style="gap:12px;padding:0 var(--gutter)">
-      <${ExerciseIcon} exercise=${exercise} variant="on-bg" />
+      <${ExerciseIcon} exercise=${exercise} variant="on-bg" label="About ${exercise.name}"
+        onClick=${() => setShowInfo(true)} />
       <div style="flex:1;min-width:0">
         <div class="medium">${exercise.name}</div>
         <div class="mono t-caption c-subtle" style="margin-top:2px">
@@ -120,21 +176,23 @@ function ExerciseSlot({ slot, exercise, session, onSetDone }) {
       <${ExerciseInfoButton} exercise=${exercise} />
     </div>
     ${setNumbers.map(n => html`<${SetRow} key=${n} setNumber=${n} slot=${slot} exercise=${exercise}
-      existing=${logged.find(s => s.setNumber === n)} onDone=${onSetDone} />`)}
+      existing=${logged.find(s => s.setNumber === n)} onDone=${onSetDone}
+      onTimer=${onTimeSet && slot.targetDurationSeconds != null ? () => onTimeSet(n) : null} />`)}
+    ${showInfo && html`<${ExerciseInfoSheet} exercise=${exercise} onClose=${() => setShowInfo(false)} />`}
   </div>`;
 }
 
-function SetRow({ setNumber, slot, exercise, existing, onDone }) {
+function SetRow({ setNumber, slot, exercise, existing, onDone, onTimer }) {
   const weightUnit = store.state.settings.preferredUnit;
   const time = timeUnit(slot);
 
-  const hasCount = slot.targetReps != null;
+  const hasCount = tracksCount(slot, exercise);
   const hasWeight = tracksWeight(slot, exercise);
   const hasTime = slot.targetDurationSeconds != null;
 
   // The targets, written the way the fields show them.
   const target = {
-    count: hasCount ? String(slot.targetReps) : '',
+    count: slot.targetReps != null ? String(slot.targetReps) : '',
     weight: slot.targetWeightKg != null ? formatWeight(slot.targetWeightKg, weightUnit) : '',
     time: hasTime ? trimNumber(secondsToUnit(slot.targetDurationSeconds, time)) : '',
   };
@@ -200,6 +258,9 @@ function SetRow({ setNumber, slot, exercise, existing, onDone }) {
     ${hasWeight && field('weight', weightUnit, parsed.weightKg, 'decimal')}
     ${hasTime && field('time', UNIT_LABELS[time], parsed.seconds, 'decimal')}
     <span class="spacer"></span>
+    ${onTimer && !values.done && html`<button class="set-timer" aria-label="Time set ${setNumber}" onClick=${onTimer}>
+      <${Icon} name="timer" size=${20} />
+    </button>`}
     <button class="set-check ${values.done ? 'done' : ''}" role="checkbox" aria-checked=${String(values.done)}
       aria-label="Set ${setNumber} done" onClick=${toggle}>
       <${Icon} name=${values.done ? 'check-circle-fill' : 'circle'} size=${28} weight=${1.5} />

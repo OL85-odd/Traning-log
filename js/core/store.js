@@ -24,8 +24,16 @@ const clone = value => JSON.parse(JSON.stringify(value));
 /// A quick session is not the day's planned workout: it has no plan day.
 export const isQuickSession = session => session.planDayTemplateID == null;
 
-/// A log that exists only to hold the day's feel modifiers.
+/// A log with no workout in it: it only holds the day's feel modifiers, or
+/// the reason the planned session was skipped.
 const isEmptyHolder = session => !session.completedAt && session.sets.length === 0;
+
+/// A holder that holds nothing any more can go.
+const isSpent = session => isEmptyHolder(session) && session.feelModifiers.length === 0 && !session.skipReason;
+
+/// Built-in content is added to, never replaced: a device that already has
+/// plans gets the new templates appended once (by name) when this goes up.
+export const CONTENT_VERSION = 2;
 
 /// A plan day rebuilt from what a session logged: one slot per exercise,
 /// with a field for every kind of number that was entered.
@@ -96,6 +104,14 @@ export function createStore({ storage, now = () => new Date() } = {}) {
     state.quickSessions = (saved.quickSessions ?? []).map(q => newQuickSession(q));
     state.activeSession = saved.activeSession ? normalizeSession(saved.activeSession) : null;
     state.activeSessionDay = saved.activeSessionDay ?? null;
+
+    if ((state.settings.contentVersion ?? 0) < CONTENT_VERSION) {
+      // A device from before the first-run guide existed has already found its way.
+      if (saved.settings?.contentVersion == null) state.settings.onboardingCompleted = true;
+      const known = new Set(state.plans.map(p => p.name));
+      state.plans.push(...builtInPlans().filter(p => !known.has(p.name)));
+      state.settings.contentVersion = CONTENT_VERSION;
+    }
     return true;
   }
 
@@ -187,6 +203,30 @@ export function createStore({ storage, now = () => new Date() } = {}) {
       return last ? daysBetween(last, now()) : null;
     },
 
+    /// The reason today's planned session was skipped, or null.
+    get todaySkipReason() {
+      const log = store.planSessionOn(now());
+      return log && !log.completedAt ? log.skipReason : null;
+    },
+
+    /// What happened to the planned training days of the last `days` days:
+    /// { planned, done, skipped: { reason: count }, missed }.
+    adherence(days = 28) {
+      const summary = { planned: 0, done: 0, skipped: {}, missed: 0 };
+      const start = state.settings.activePlanStartDate ? startOfDay(state.settings.activePlanStartDate) : null;
+      if (!start) return summary;
+      for (const status of store.dailyStatuses(-days, -1)) {
+        if (status.isBlank || status.date < start) continue;
+        const planDay = store.planDayOn(status.date);
+        if (!planDay || planDay.dayType === 'rest') continue;
+        summary.planned += 1;
+        if (status.planDone) summary.done += 1;
+        else if (status.skipReason) summary.skipped[status.skipReason] = (summary.skipped[status.skipReason] ?? 0) + 1;
+        else summary.missed += 1;
+      }
+      return summary;
+    },
+
     get todayModifiers() {
       return [...new Set(store.sessionsOn(now()).flatMap(s => s.feelModifiers))];
     },
@@ -242,6 +282,10 @@ export function createStore({ storage, now = () => new Date() } = {}) {
           date,
           sessionLogID: (planLog ?? quickLog)?.id ?? null,
           hasLog: planLog != null || quickLog != null,
+          /// The planned workout itself was finished.
+          planDone: planLog != null,
+          /// The planned workout was skipped on purpose: a SKIP_REASONS id.
+          skipReason: planLog ? null : (logs.find(s => !isQuickSession(s) && s.skipReason)?.skipReason ?? null),
           completionPercent: completion,
           didBackup: logs.some(s => s.didBackup),
           dayType,
@@ -367,6 +411,13 @@ export function createStore({ storage, now = () => new Date() } = {}) {
       commit();
     },
 
+    updateQuickSession(quick) {
+      const index = state.quickSessions.findIndex(q => q.id === quick.id);
+      if (index === -1) return;
+      state.quickSessions[index] = quick;
+      commit();
+    },
+
     // MARK: - Feel modifiers
 
     /// Toggles a modifier for today. It is kept on today's log; when there is
@@ -378,7 +429,7 @@ export function createStore({ storage, now = () => new Date() } = {}) {
       if (store.todayModifiers.includes(modifier)) {
         // Switch it off wherever it sits, and drop a log left with nothing in it.
         for (const log of logs) log.feelModifiers = log.feelModifiers.filter(m => m !== modifier);
-        const emptied = new Set(logs.filter(l => isEmptyHolder(l) && l.feelModifiers.length === 0).map(l => l.id));
+        const emptied = new Set(logs.filter(isSpent).map(l => l.id));
         state.sessions = state.sessions.filter(s => !emptied.has(s.id));
       } else if (logs[0]) {
         logs[0].feelModifiers = [...logs[0].feelModifiers, modifier];
@@ -392,6 +443,38 @@ export function createStore({ storage, now = () => new Date() } = {}) {
           feelModifiers: [modifier],
         }));
       }
+      commit();
+    },
+
+    // MARK: - Skipping
+
+    /// Marks the planned session of `date` as skipped, with a reason. It is
+    /// recorded on the day's log, so the timeline can tell a day that was
+    /// let go on purpose from one that was simply forgotten.
+    skipSession(reason, date = now()) {
+      const day = startOfDay(date);
+      const existing = store.planSessionOn(day);
+      if (existing?.completedAt) return; // it was done: nothing to skip
+      if (existing) {
+        existing.skipReason = reason;
+      } else {
+        const planDay = store.planDayOn(day);
+        state.sessions.push(newSession({
+          date: toISO(day),
+          planTemplateID: store.activePlan?.id ?? null,
+          planDayTemplateID: planDay?.id ?? null,
+          dayType: planDay?.dayType ?? 'rest',
+          skipReason: reason,
+        }));
+      }
+      commit();
+    },
+
+    unskipSession(date = now()) {
+      const existing = store.planSessionOn(date);
+      if (!existing || existing.completedAt) return;
+      existing.skipReason = null;
+      if (isSpent(existing)) state.sessions = state.sessions.filter(s => s.id !== existing.id);
       commit();
     },
 
@@ -415,6 +498,7 @@ export function createStore({ storage, now = () => new Date() } = {}) {
             session.dayType = planDay.dayType;
           }
           if (isToday && !existing.startedAt) session.startedAt = toISO(now());
+          session.skipReason = null; // training after all
         }
         state.activeSession = session;
       } else {
@@ -430,17 +514,19 @@ export function createStore({ storage, now = () => new Date() } = {}) {
       return state.activeSession;
     },
 
-    /// Starts a quick session: just this one exercise, for `quick.minutes`.
-    /// It is its own log, separate from the day's planned workout.
+    /// Starts a quick session: just this one exercise, with the target the
+    /// card states — "12 reps" or "5 min". It is its own log, separate from
+    /// the day's planned workout. `quick` need not be a saved card.
     startQuickSession(quick) {
       const exercise = store.exerciseByID(quick.exerciseID);
       if (!exercise) return null;
       const dayType = CATEGORIES[exercise.category].dayType;
+      const targets = quick.reps != null
+        ? { targetSets: Math.max(1, quick.sets ?? 1), targetReps: quick.reps }
+        : { targetSets: 1, targetDurationSeconds: quick.minutes * 60, unit2: 'Min', restSeconds: 0 };
       state.activeSessionDay = newPlanDay({
         dayType,
-        blocks: [newBlock({ exercises: [newSlot({
-          exerciseID: exercise.id, targetSets: 1, targetDurationSeconds: quick.minutes * 60, unit2: 'Min',
-        })] })],
+        blocks: [newBlock({ exercises: [newSlot({ exerciseID: exercise.id, ...targets })] })],
       });
       state.activeSession = newSession({
         date: toISO(startOfDay(now())),
@@ -557,9 +643,11 @@ export function createStore({ storage, now = () => new Date() } = {}) {
     // First launch: save the built-in plans straight away so their IDs stay
     // stable from now on, and seed the default quick sessions.
     state.plans = builtInPlans();
-    for (const [name, minutes] of [['Squat', 5], ['Plank', 3], ['Hip Flexor Stretch', 10]]) {
+    state.settings.contentVersion = CONTENT_VERSION;
+    // One of each kind: something counted, something held, something stretched.
+    for (const [name, target] of [['Push-up', { reps: 12, sets: 1 }], ['Plank', { minutes: 2 }], ['Hip Flexor Stretch', { minutes: 5 }]]) {
       const exercise = state.exercises.find(e => e.name === name);
-      if (exercise) state.quickSessions.push(newQuickSession({ exerciseID: exercise.id, minutes }));
+      if (exercise) state.quickSessions.push(newQuickSession({ exerciseID: exercise.id, ...target }));
     }
   }
   if (!state.settings.activePlanID && state.plans[0]) {

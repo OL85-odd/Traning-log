@@ -73,6 +73,15 @@ const ICONS = {
   download: stroke('M12 3.5V15M8 11l4 4 4-4M5 15.5V20h14v-4.5'),
   'calendar-plus': rect(3.5, 5, 17, 15.5, 2.5) + stroke('M3.5 10h17M8 3v4M16 3v4M12 12.8v5M9.5 15.3h5'),
   'calendar-clock': rect(3.5, 5, 17, 15.5, 2.5) + stroke('M3.5 10h17M8 3v4M16 3v4M12 13v2.6l1.8 1.1'),
+
+  // Interval timer, skipping, theme
+  figure: circle(12, 4.6, 1.8) + stroke('M5.5 9.5h13M12 9.5v6M12 15.5l-3.5 5.5M12 15.5l3.5 5.5'),
+  pause: rect(6.5, 5, 4, 14, 1.2, solid) + rect(13.5, 5, 4, 14, 1.2, solid),
+  forward: filled('M4.5 5.6v12.8a.6.6 0 0 0 .95.5l8.6-6.4a.6.6 0 0 0 0-1L5.45 5.1a.6.6 0 0 0-.95.5z') + rect(16, 5, 3, 14, 1, solid),
+  timer: circle(12, 13.5, 7.5) + stroke('M12 13.5V9.5M9.5 3h5M12 3v3'),
+  skip: circle(12, 12, 9) + stroke('M6 6l12 12'),
+  undo: stroke('M8 5L4 9l4 4M4 9h9.5a5.5 5.5 0 0 1 0 11H9'),
+  sun: circle(12, 12, 4) + stroke('M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8'),
 };
 
 /// <${Icon} name="plus" size=${16} />

@@ -10,6 +10,9 @@ import { PlanPickerSheet } from './planPicker.js';
 
 export const APP_VERSION = '1.0';
 
+/// Settings → Appearance. "System" follows the device's light or dark mode.
+const THEMES = { system: 'System', dark: 'Dark', light: 'Light' };
+
 export function SettingsView() {
   const [sheet, setSheet] = useState(null); // 'plan' | 'export' | 'import'
   const settings = store.state.settings;
@@ -48,6 +51,16 @@ export function SettingsView() {
 
       <div class="list-header">General</div>
       <div class="list-group">
+        <label class="list-row">
+          <span>Appearance</span><span class="spacer"></span>
+          <span class="select-wrap">
+            ${THEMES[settings.theme] ?? THEMES.system}<${Icon} name="chevrons-updown" size=${13} weight=${2.2} />
+            <select value=${settings.theme ?? 'system'} aria-label="Appearance"
+              onChange=${e => store.updateSettings({ theme: e.target.value })}>
+              ${Object.entries(THEMES).map(([id, name]) => html`<option value=${id}>${name}</option>`)}
+            </select>
+          </span>
+        </label>
         <label class="list-row">
           <span>Weight unit</span><span class="spacer"></span>
           <span class="select-wrap">
@@ -102,7 +115,7 @@ async function deliverFile(name, text) {
   return true;
 }
 
-function BackupExportSheet({ onClose }) {
+export function BackupExportSheet({ onClose }) {
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState(null);

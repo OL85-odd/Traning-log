@@ -6,19 +6,26 @@ import { test } from 'node:test';
 import { BackupError, makeBackup, parseBackup, serializeBackup } from '../js/core/backup.js';
 import { BUILT_IN_EXERCISES, ICON_MAP, builtInPlans } from '../js/core/builtin.js';
 import { daysBetween, isoWeekday, monthsBetween, startOfWeek, toISO } from '../js/core/dates.js';
-import { newPlan, newPlanDay, newBlock, newSlot, newSetLog } from '../js/core/models.js';
+import {
+  CATEGORIES, EQUIPMENT, MUSCLE_GROUPS, newPlan, newPlanDay, newBlock, newSlot, newSetLog, slotsOf,
+} from '../js/core/models.js';
+import { daysPerWeek, recommendPlans } from '../js/core/recommend.js';
 import { completionPercent, planDayFor, plannedSetCount, programProgress, weekNumber } from '../js/core/planResolver.js';
 import { adjustedSlot, effectiveMonths, metricKind, targetValueAt } from '../js/core/progression.js';
-import { deltaVsTarget, overallSeries, seriesFor, trackableExercises } from '../js/core/progressStats.js';
-import { STORAGE_KEY, UNREADABLE_KEY, createStore, isQuickSession } from '../js/core/store.js';
 import {
-  defaultTargets, estimatedMinutes, formatWeight, isInvalid, parseDecimal, parseWhole, secondsToUnit,
-  setCount, timeUnit, tracksWeight, unitToSeconds, weightToKg,
+  changeSinceFirst, chartableExercises, deltaVsTarget, overallSeries, seriesFor, trackableExercises,
+} from '../js/core/progressStats.js';
+import { CONTENT_VERSION, STORAGE_KEY, UNREADABLE_KEY, createStore, isQuickSession } from '../js/core/store.js';
+import {
+  defaultQuickTarget, defaultTargets, estimatedMinutes, formatWeight, intervalSteps, isInvalid, parseDecimal,
+  parseWhole, quickTargetLabel, secondsToUnit, setCount, timeUnit, tracksCount, tracksWeight, unitToSeconds,
+  weightToKg,
 } from '../js/core/units.js';
 
 const local = (y, m, d, h = 12) => new Date(y, m - 1, d, h);
 const named = name => BUILT_IN_EXERCISES.find(e => e.name === name);
 const squat = named('Squat');
+const PLAN_COUNT = builtInPlans().length;
 
 function memoryStorage(initial = {}) {
   const data = { ...initial };
@@ -60,16 +67,37 @@ test('ISO dates carry no milliseconds (Swift .iso8601 rejects them)', () => {
 // MARK: - Built-in content
 
 test('built-in content is complete and consistent', () => {
-  assert.equal(BUILT_IN_EXERCISES.length, 33);
-  assert.equal(new Set(BUILT_IN_EXERCISES.map(e => e.id)).size, 33);
-  // Every mapped drawing exists, and an exercise without one of its own has
-  // none at all rather than borrowing another exercise's.
+  const count = BUILT_IN_EXERCISES.length;
+  assert.ok(count >= 250, `${count} exercises`);
+  assert.equal(new Set(BUILT_IN_EXERCISES.map(e => e.id)).size, count);
+  assert.equal(new Set(BUILT_IN_EXERCISES.map(e => e.name.toLowerCase())).size, count);
+  // The ids of the original exercises are shared with the iOS app and never change.
+  assert.equal(squat.id, '4F1E3A0E-B38C-5DA8-BA5A-068F76754CCF');
+
+  for (const e of BUILT_IN_EXERCISES) {
+    assert.ok(CATEGORIES[e.category], `${e.name}: category ${e.category}`);
+    assert.ok(EQUIPMENT[e.equipment], `${e.name}: equipment ${e.equipment}`);
+    assert.ok(e.muscleGroups.length > 0 && e.muscleGroups.every(m => MUSCLE_GROUPS[m]), `${e.name}: muscle groups`);
+    assert.ok(['reps', 'time', 'distance'].includes(e.tracking), `${e.name}: tracking`);
+    assert.ok([1, 2, 3].includes(e.level) && ['free', 'pro'].includes(e.tier), `${e.name}: level/tier`);
+    assert.ok(e.instructions.length >= 3 && e.tips.length >= 2, `${e.name}: instructions and tips`);
+  }
+  // Every category has a library worth browsing.
+  for (const id of Object.keys(CATEGORIES)) {
+    assert.ok(BUILT_IN_EXERCISES.filter(e => e.category === id).length >= 15, `too few in ${id}`);
+  }
+
+  // An exercise has a drawing of its own or none at all, and every drawing
+  // that is mapped is on disk. (Not all are drawn yet: tools/make-icons.py.)
+  assert.equal(new Set(Object.values(ICON_MAP)).size, Object.keys(ICON_MAP).length);
+  assert.ok(Object.keys(ICON_MAP).length >= 140);
+  for (const name of ['Squat', 'Push-up', 'Plank', 'Running', 'Burpee', 'Downward-Facing Dog']) {
+    assert.ok(ICON_MAP[name], `no pictogram for ${name}`);
+  }
   for (const [name, icon] of Object.entries(ICON_MAP)) {
     assert.ok(named(name), `icon mapped for unknown exercise ${name}`);
     assert.ok(existsSync(new URL(`../img/exercises/${icon}.png`, import.meta.url)), `missing ${icon}.png`);
   }
-  assert.equal(ICON_MAP['Pull-up'], 'exercise-pull-up');
-  for (const name of ['Running', 'Push-up', 'Cat-Cow', 'Hip Flexor Stretch']) assert.equal(ICON_MAP[name], undefined);
   const [home, beginner, mobility] = builtInPlans();
   assert.equal(home.days.length, 7);
   assert.equal(beginner.days.length, 28);
@@ -84,6 +112,24 @@ test('built-in content is complete and consistent', () => {
   const homeNames = home.days.flatMap(d => d.blocks).flatMap(b => b.exercises)
     .map(slot => BUILT_IN_EXERCISES.find(e => e.id === slot.exerciseID).name);
   for (const gym of ['Bench Press', 'Deadlift', 'Pull-up']) assert.ok(!homeNames.includes(gym));
+
+  // Every template: seven days for a weekly plan, each slot a known exercise
+  // with something to do, and a plan marked "no equipment" needing none.
+  const plans = builtInPlans();
+  assert.ok(plans.length >= 15);
+  assert.equal(new Set(plans.map(p => p.name)).size, plans.length);
+  for (const plan of plans) {
+    assert.ok(plan.summary && plan.focus && [1, 2, 3].includes(plan.level), `${plan.name}: description`);
+    if (plan.planMode === 'weeklyCycle') assert.equal(plan.days.length, 7, plan.name);
+    for (const slot of plan.days.flatMap(slotsOf)) {
+      const exercise = BUILT_IN_EXERCISES.find(e => e.id === slot.exerciseID);
+      assert.ok(exercise, `${plan.name}: unknown exercise`);
+      assert.ok(slot.targetReps != null || slot.targetDurationSeconds != null, `${plan.name}: ${exercise.name} has no target`);
+      if (plan.equipment === 'none') {
+        assert.ok(['none', 'mat', 'wall'].includes(exercise.equipment), `${plan.name}: ${exercise.name} needs ${exercise.equipment}`);
+      }
+    }
+  }
 });
 
 // MARK: - Plan resolver
@@ -231,13 +277,13 @@ test('series chart the best logged value against a rising target', () => {
 
 test('first launch seeds plans, an active plan and quick sessions — and they stay stable', () => {
   const { store, storage } = storeAt(local(2026, 11, 15));
-  assert.equal(store.state.plans.length, 3);
+  assert.equal(store.state.plans.length, PLAN_COUNT);
   assert.equal(store.activePlan.name, 'Home Maintenance');
   assert.equal(store.state.quickSessions.length, 3);
 
   const again = createStore({ storage, now: () => local(2026, 11, 16) });
   assert.deepEqual(again.state.plans.map(p => p.id), store.state.plans.map(p => p.id));
-  assert.equal(again.state.exercises.length, 33);
+  assert.equal(again.state.exercises.length, BUILT_IN_EXERCISES.length);
 });
 
 test('a session is logged, finished and shows up in the daily statuses', () => {
@@ -322,7 +368,7 @@ test('logging a past day twice reuses the same session', () => {
 
 test('a quick session is its own log, apart from the planned workout', () => {
   const { store, clock } = storeAt(local(2026, 11, 16, 9)); // Monday has a plan day of its own
-  const session = store.startQuickSession(store.state.quickSessions[0]); // Squat, 5 min
+  const session = store.startQuickSession({ exerciseID: squat.id, minutes: 5 }); // a timed one
   const day = store.planDayForSession(session);
   assert.equal(day.blocks.length, 1);
   assert.equal(day.blocks[0].exercises[0].exerciseID, squat.id);
@@ -499,13 +545,13 @@ test('quick sessions cap at four; deleting the active plan clears it', () => {
   store.deletePlan(store.activePlan.id);
   assert.equal(store.activePlan, null);
   assert.equal(store.todayPlanDay, null);
-  assert.equal(store.state.plans.length, 2);
+  assert.equal(store.state.plans.length, PLAN_COUNT - 1);
 });
 
 test('corrupt stored data starts clean instead of crashing — and is kept aside', () => {
   const storage = memoryStorage({ [STORAGE_KEY]: '{not json' });
   const store = createStore({ storage, now: () => local(2026, 11, 15) });
-  assert.equal(store.state.plans.length, 3);
+  assert.equal(store.state.plans.length, PLAN_COUNT);
   assert.equal(storage.data[UNREADABLE_KEY], '{not json'); // not destroyed by the save that follows
 });
 
@@ -546,7 +592,15 @@ test('a slot asks for what makes sense for its exercise', () => {
   assert.equal(setCount(plank), 3);
   assert.equal(tracksWeight(run, named('Running')), false);
   assert.equal(tracksWeight(plank, named('Plank')), false);
-  assert.equal(tracksWeight(lift, squat), true);
+  // Weight is asked for when there is a load: a barbell lift, or a target
+  // weight set in the plan. A bodyweight squat or push-up has no kg field.
+  assert.equal(tracksWeight(lift, squat), false);
+  assert.equal(tracksWeight(lift, named('Back Squat')), true);
+  assert.equal(tracksWeight({ ...lift, targetWeightKg: 10 }, squat), true);
+  assert.equal(tracksWeight(lift, named('Goblet Squat')), true);
+  // Interval work is counted afterwards, so it always offers a reps field.
+  assert.equal(tracksCount(newSlot({ targetDurationSeconds: 30 }), named('Burpee')), true);
+  assert.equal(tracksCount(plank, named('Plank')), false);
 
   assert.deepEqual(defaultTargets(named('Running')), { targetDurationSeconds: 1200, unit2: 'Min' });
   assert.deepEqual(defaultTargets(squat), { targetSets: 3, targetReps: 10 });
@@ -598,7 +652,7 @@ test('a backup round-trips and matches what the iOS decoder requires', () => {
   assert.equal(target.state.sessions[0].sets[0].weightKg, 42.5);
   assert.deepEqual(target.state.sessions[0].feelModifiers, ['lowEnergy']);
   assert.equal(target.activePlan.id, store.activePlan.id);
-  assert.equal(target.state.exercises.length, 34);
+  assert.equal(target.state.exercises.length, BUILT_IN_EXERCISES.length + 1);
   assert.equal(target.state.exercises.filter(e => e.name === 'Squat').length, 1); // built-ins not duplicated
 });
 
@@ -625,4 +679,169 @@ test('unusable files are refused with a readable reason', () => {
   assert.throws(() => parseBackup('nope'), BackupError);
   assert.throws(() => parseBackup('{"hello":1}'), BackupError);
   assert.throws(() => parseBackup(JSON.stringify({ version: 2, plans: [], sessions: [] })), /newer than this app/);
+});
+
+// MARK: - Quick sessions, skipping, intervals, first run
+
+test('a quick session logs what it says: reps are counted, minutes are timed', () => {
+  const { store } = storeAt(local(2026, 11, 16, 9));
+  const pushUp = named('Push-up');
+
+  // The defaults: one counted, two timed.
+  assert.deepEqual(store.state.quickSessions.map(quickTargetLabel), ['12 reps', '2 min', '5 min']);
+  assert.deepEqual(defaultQuickTarget(pushUp), { reps: 12, sets: 1, minutes: 5 });
+  assert.equal(defaultQuickTarget(named('Burpee')).reps, null);
+  assert.equal(quickTargetLabel({ reps: 8, sets: 3, minutes: 5 }), '3 × 8 reps');
+
+  // "12 push-ups": one set of 12 reps, no clock.
+  const session = store.startQuickSession(store.state.quickSessions[0]);
+  const slot = slotsOf(store.planDayForSession(session))[0];
+  assert.equal(slot.exerciseID, pushUp.id);
+  assert.equal(slot.targetReps, 12);
+  assert.equal(slot.targetDurationSeconds, null);
+  store.logSet(newSetLog({ exerciseID: pushUp.id, setNumber: 1, repsCompleted: 14, isCompleted: true }));
+  store.completeSession();
+  assert.equal(store.state.sessions[0].sets[0].repsCompleted, 14);
+  assert.equal(store.state.sessions[0].title, 'Push-up');
+
+  // An exercise can be logged once without keeping a card for it.
+  store.startQuickSession({ exerciseID: named('Burpee').id, minutes: 5, reps: null });
+  assert.equal(slotsOf(store.planDayForSession(store.state.activeSession))[0].targetDurationSeconds, 300);
+  store.cancelSession();
+  assert.equal(store.state.quickSessions.length, 3);
+
+  // A card's target can be changed.
+  store.updateQuickSession({ ...store.state.quickSessions[0], reps: 20, sets: 2 });
+  assert.equal(quickTargetLabel(store.state.quickSessions[0]), '2 × 20 reps');
+});
+
+test('progress is charted for whatever was logged, plan or not', () => {
+  const { store, clock } = storeAt(local(2026, 11, 16, 9));
+  const pushUp = named('Push-up'), burpee = named('Burpee');
+  for (const [day, reps] of [[16, 12], [18, 14], [20, 15]]) {
+    clock.now = local(2026, 11, day, 9);
+    store.startQuickSession({ exerciseID: burpee.id, minutes: 5, reps: 10, sets: 1 });
+    store.logSet(newSetLog({ exerciseID: burpee.id, setNumber: 1, repsCompleted: reps, isCompleted: true }));
+    store.completeSession();
+  }
+  const plan = store.activePlan, start = store.state.settings.activePlanStartDate;
+  assert.equal(plan.progressionEnabled, false);
+
+  // Burpee is in no plan: its chart is what was done, with no target line.
+  const charted = chartableExercises(plan, store.state.exercises, store.state.sessions);
+  assert.ok(charted.includes(burpee));
+  const series = seriesFor(burpee, plan, start, store.state.sessions, clock.now);
+  assert.equal(series.kind, 'reps');
+  assert.deepEqual(series.points.map(p => p.actual), [12, 14, 15]);
+  assert.equal(series.currentTarget, null);
+  assert.equal(deltaVsTarget(series), null);
+  assert.equal(changeSinceFirst(series), 25);
+
+  // A plan exercise is chartable without automatic progression: its target is flat.
+  assert.ok(charted.includes(pushUp));
+  assert.equal(seriesFor(pushUp, plan, start, [], clock.now).currentTarget, 8);
+  // With no plan at all, logged exercises still chart.
+  assert.deepEqual(chartableExercises(null, store.state.exercises, store.state.sessions), [burpee]);
+  assert.equal(seriesFor(burpee, null, null, store.state.sessions).points.length, 3);
+});
+
+test('a planned session can be skipped with a reason, and the record says why', () => {
+  const { store, clock } = storeAt(local(2026, 11, 16, 9)); // Monday, training day
+  store.skipSession('sick');
+  assert.equal(store.todaySkipReason, 'sick');
+  assert.equal(store.todaySession, null);
+  let monday = store.dailyStatuses().find(s => s.key === '2026-11-16');
+  assert.equal(monday.skipReason, 'sick');
+  assert.equal(monday.hasLog, false);
+
+  // Undo leaves nothing behind.
+  store.unskipSession();
+  assert.equal(store.todaySkipReason, null);
+  assert.equal(store.state.sessions.length, 0);
+
+  // Training after all clears the skip.
+  store.skipSession('tired');
+  store.startSession(store.todayPlanDay);
+  store.logSet(newSetLog({ exerciseID: squat.id, setNumber: 1, repsCompleted: 10, isCompleted: true }));
+  store.completeSession();
+  assert.equal(store.todaySession.skipReason, null);
+  assert.equal(store.state.sessions.length, 1);
+
+  // A past day can be marked too, and four weeks add up.
+  clock.now = local(2026, 11, 23, 9);                 // the next Monday
+  store.skipSession('shortOnTime', local(2026, 11, 18)); // Wednesday's run
+  // Friday was neither done nor skipped.
+  assert.deepEqual(store.adherence(28), { planned: 3, done: 1, skipped: { shortOnTime: 1 }, missed: 1 });
+
+  // A feel modifier on a skipped day keeps the reason when it is switched off again.
+  store.skipSession('away');
+  store.toggleModifier('lowEnergy');
+  store.toggleModifier('lowEnergy');
+  assert.equal(store.todaySkipReason, 'away');
+});
+
+test('an interval day is a circuit: each round goes through every exercise', () => {
+  const tabata = builtInPlans().find(p => p.name === 'Tabata Starter');
+  const day = tabata.days.find(d => d.dayType === 'hiit');
+  const slots = slotsOf(day);
+  const steps = intervalSteps(day);
+
+  assert.equal(steps.filter(s => s.kind === 'work').length, slots.reduce((sum, slot) => sum + setCount(slot), 0));
+  assert.equal(steps[0].kind, 'work');
+  assert.equal(steps[1].kind, 'rest');
+  assert.equal(steps.at(-1).kind, 'work'); // no rest after the last interval
+  // Round 1 visits every exercise before round 2 starts.
+  const firstRound = steps.filter(s => s.kind === 'work').slice(0, slots.length);
+  assert.deepEqual(firstRound.map(s => s.slot.id), slots.map(s => s.id));
+  assert.ok(firstRound.every(s => s.round === 1));
+  // 20 seconds on, 10 off.
+  assert.equal(steps[0].seconds, 20);
+  assert.equal(steps[1].seconds, 10);
+  // A strength day has nothing timed in it but the plank.
+  assert.equal(intervalSteps(builtInPlans()[0].days[0]).filter(s => s.kind === 'work').length, 3);
+});
+
+test('the first-run guide suggests a plan that fits the answers', () => {
+  const plans = builtInPlans();
+  const first = answers => recommendPlans(answers, plans)[0];
+  const allowed = (answers, kit) => recommendPlans(answers, plans).every(p => kit.includes(p.equipment));
+
+  assert.equal(first({ focus: 'calisthenics', equipment: [], days: 3 }).name, 'Calisthenics Basics');
+  assert.equal(first({ focus: 'hiit', equipment: [], days: 2 }).name, 'Tabata Starter');
+  assert.equal(first({ focus: 'strength', equipment: ['dumbbells'], days: 3 }).name, 'Dumbbell Full Body');
+  assert.equal(first({ focus: 'strength', equipment: ['kettlebell'], days: 3 }).name, 'Kettlebell Basics');
+  assert.equal(first({ focus: 'yoga', equipment: [], days: 3 }).focus, 'yoga');
+  assert.equal(first({ focus: 'mix', equipment: [], days: 3 }).name, 'Home Maintenance');
+  // Nothing that needs kit you do not have — and strength without weights is calisthenics.
+  assert.ok(allowed({ focus: 'strength', equipment: [], days: 4 }, ['none', 'wall', 'bike']));
+  assert.equal(first({ focus: 'strength', equipment: [], days: 3 }).name, 'Calisthenics Basics');
+  assert.equal(first({ focus: 'cardio', equipment: [], days: 3 }).name, 'Cardio Base');
+  // A gym opens everything up.
+  assert.ok(recommendPlans({ focus: 'strength', equipment: ['gym'], days: 4 }, plans).some(p => p.name === 'Upper / Lower Split'));
+  assert.equal(daysPerWeek(plans[1]), 3); // the four-week program trains three days a week
+});
+
+test('a device from an earlier version gets the new templates and skips the guide', () => {
+  // First launch: the guide is due, and the content is current.
+  const fresh = storeAt(local(2026, 11, 16));
+  assert.equal(fresh.store.state.settings.onboardingCompleted, false);
+  assert.equal(fresh.store.state.settings.contentVersion, CONTENT_VERSION);
+
+  // A stored state from before: three plans, no content version.
+  const old = JSON.parse(fresh.storage.data[STORAGE_KEY]);
+  old.plans = old.plans.slice(0, 3);
+  delete old.settings.contentVersion;
+  old.settings.isPro = true;
+  const storage = memoryStorage({ [STORAGE_KEY]: JSON.stringify(old) });
+  const store = createStore({ storage, now: () => local(2026, 11, 17) });
+
+  assert.equal(store.state.plans.length, PLAN_COUNT);
+  assert.deepEqual(store.state.plans.slice(0, 3).map(p => p.id), old.plans.map(p => p.id)); // theirs are untouched
+  assert.equal(store.state.settings.onboardingCompleted, true);
+  assert.equal(store.activePlan.id, old.settings.activePlanID);
+
+  // And only once: a plan deleted afterwards stays deleted.
+  store.deletePlan(store.state.plans.at(-1).id);
+  const again = createStore({ storage, now: () => local(2026, 11, 18) });
+  assert.equal(again.state.plans.length, PLAN_COUNT - 1);
 });

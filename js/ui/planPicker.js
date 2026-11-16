@@ -4,14 +4,30 @@
 
 import { html, useState } from '../vendor/preact-htm.js';
 import { builtInPlans } from '../core/builtin.js';
-import { DAY_TYPES, WEEKDAY_NAMES, newPlan, newPlanDay, slotsOf, uuid } from '../core/models.js';
+import { DAY_TYPES, EQUIPMENT, WEEKDAY_NAMES, newPlan, newPlanDay, slotsOf, uuid } from '../core/models.js';
+import { daysPerWeek } from '../core/recommend.js';
 import { ActionSheet, Alert, Chip, Sheet, Switch, store } from './common.js';
 import { Icon } from './icons.js';
 import { DayExerciseEditor } from './planEditor.js';
 
 const clone = value => JSON.parse(JSON.stringify(value));
-const trainingDayCount = plan => plan.days.filter(d => d.dayType !== 'rest').length;
-const modeName = plan => (plan.planMode === 'weeklyCycle' ? 'Weekly cycle' : 'Program');
+/// The kinds of plan the picker can be narrowed to.
+const FOCUS_NAMES = {
+  calisthenics: 'Calisthenics', strength: 'Strength', hiit: 'HIIT', cardio: 'Cardio', yoga: 'Yoga & mobility', mix: 'Mixed',
+};
+const LEVELS = ['Beginner', 'Intermediate', 'Advanced'];
+
+/// "Calisthenics · 3 days / week · Beginner · Pull-up bar"
+function planFacts(plan) {
+  const days = daysPerWeek(plan);
+  return [
+    plan.isCustom ? 'Your plan' : FOCUS_NAMES[plan.focus],
+    plan.planMode === 'finiteProgram' ? `${Math.ceil(plan.days.length / 7)}-week program` : null,
+    days > 0 ? `${days} ${days === 1 ? 'day' : 'days'} / week` : null,
+    plan.isCustom ? null : LEVELS[(plan.level ?? 1) - 1],
+    plan.equipment && plan.equipment !== 'none' ? EQUIPMENT[plan.equipment] : null,
+  ].filter(Boolean).join(' · ');
+}
 
 // MARK: - Plan picker
 
@@ -22,6 +38,11 @@ export function PlanPickerSheet({ onClose }) {
   const [copying, setCopying] = useState(null);       // { plan, name }
   const [deleting, setDeleting] = useState(null);     // plan
   const [created, setCreated] = useState(null);       // plan just created, not yet in use
+  const [focus, setFocus] = useState(null);           // narrow the list to one kind; 'mine' = your own
+
+  const plans = store.state.plans.filter(plan =>
+    !focus || (focus === 'mine' ? plan.isCustom : !plan.isCustom && plan.focus === focus));
+  const hasOwn = store.state.plans.some(p => p.isCustom);
 
   const copyPlan = () => {
     const { plan, name } = copying;
@@ -35,10 +56,16 @@ export function PlanPickerSheet({ onClose }) {
     left=${{ label: 'Cancel', onClick: onClose }}
     right=${{ label: html`<${Icon} name="plus" size=${20} weight=${2.2} />`, strong: true, onClick: () => setCreating(true) }}
     onClose=${onClose}>
-    <div class="list" style="padding-top:16px">
+    <div class="chip-row" style="padding-top:14px">
+      <${Chip} label="All" selected=${focus === null} onClick=${() => setFocus(null)} />
+      ${hasOwn && html`<${Chip} label="Mine" selected=${focus === 'mine'} onClick=${() => setFocus('mine')} />`}
+      ${Object.entries(FOCUS_NAMES).map(([id, name]) => html`
+        <${Chip} label=${name} selected=${focus === id} onClick=${() => setFocus(id)} />`)}
+    </div>
+    <div class="list" style="padding-top:12px">
       <div class="list-group">
-        ${store.state.plans.map(plan => {
-          const days = trainingDayCount(plan);
+        ${plans.length === 0 && html`<div class="list-row"><span class="t-sub c-subtle">No plans of this kind.</span></div>`}
+        ${plans.map(plan => {
           return html`<div key=${plan.id} class="list-row" style="padding:0">
             <button class="row pressable" style="flex:1;min-width:0;gap:8px;padding:11px 0 11px 16px"
               onClick=${() => {
@@ -48,9 +75,8 @@ export function PlanPickerSheet({ onClose }) {
               }}>
               <div style="flex:1;min-width:0">
                 <div class="medium truncate">${plan.name}</div>
-                <div class="mono t-caption c-subtle" style="margin-top:4px">
-                  ${modeName(plan)}${days > 0 ? ` · ${days} training days` : ''}
-                </div>
+                <div class="mono t-caption c-subtle" style="margin-top:4px">${planFacts(plan)}</div>
+                ${plan.summary && html`<div class="t-caption c-subtle" style="margin-top:4px;line-height:1.35;white-space:normal">${plan.summary}</div>`}
               </div>
               ${store.state.settings.activePlanID === plan.id && html`<${Icon} name="check" size=${18} weight=${2.4} class="c-green" />`}
             </button>
@@ -274,7 +300,7 @@ export function CreatePlanSheet({ editing = null, onClose, onCreated }) {
           <button class="list-row" style="flex-direction:column;align-items:flex-start;gap:4px"
             onClick=${() => { setShowTemplates(false); start(template.planMode, template.days, `${template.name} (Custom)`); }}>
             <span class="medium">${template.name}</span>
-            <span class="mono t-caption c-subtle">${modeName(template)}</span>
+            <span class="mono t-caption c-subtle">${planFacts(template)}</span>
           </button>`)}
       </div></div>
     <//>`}

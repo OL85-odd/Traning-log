@@ -37,7 +37,7 @@ export function useStore() {
 /// Renders its children into #modals at the top of the page instead of where
 /// it sits in the tree. Every overlay goes through here, so a sheet opened
 /// from inside another sheet is still a plain top-level layer.
-function Portal({ children }) {
+export function Portal({ children }) {
   const host = useRef(null);
   if (!host.current) host.current = document.createElement('div');
 
@@ -130,16 +130,21 @@ export function ActionSheet({ title, options, onCancel }) {
 
 // MARK: - Small shared views
 
-/// The exercise's picture in a rounded tile; falls back to its category glyph.
-/// `box` is the tile size and `img` the picture size, in points as on iOS.
-export function ExerciseIcon({ exercise, box = 44, img = 32, radius = 10, variant = '' }) {
+/// The exercise's pictogram in a rounded tile, in its category's colour;
+/// falls back to the category glyph. `box` is the tile size and `img` the
+/// picture size, in points as on iOS. With `onClick` the tile is a button.
+export function ExerciseIcon({ exercise, box = 44, img = 32, radius = 10, variant = '', onClick, label }) {
   const asset = iconAssetName(exercise);
   const category = CATEGORIES[exercise?.category] ?? CATEGORIES.strength;
-  return html`<div class="ex-icon ${variant}" style="width:${box}px;height:${box}px;border-radius:${radius}px">
-    ${asset
-      ? html`<img src="img/exercises/${asset}.png" width=${img} height=${img} alt="" />`
-      : html`<${Icon} name=${category.icon} size=${Math.round(img * 0.62)} class="c-${category.color}" />`}
-  </div>`;
+  const style = `width:${box}px;height:${box}px;border-radius:${radius}px`;
+  const picture = asset
+    // The file is set here, not through a CSS variable: a url() inside a
+    // variable is resolved against the stylesheet, not the page.
+    ? html`<span class="ex-glyph" style="width:${img}px;height:${img}px;-webkit-mask-image:url(img/exercises/${asset}.png);mask-image:url(img/exercises/${asset}.png)"></span>`
+    : html`<${Icon} name=${category.icon} size=${Math.round(img * 0.62)} />`;
+  return onClick
+    ? html`<button class="ex-icon c-${category.color} ${variant}" style=${style} aria-label=${label} onClick=${onClick}>${picture}</button>`
+    : html`<div class="ex-icon c-${category.color} ${variant}" style=${style}>${picture}</div>`;
 }
 
 /// Glyph + day type name in the type's colour. Swift: DayTypeLabel
@@ -152,6 +157,22 @@ export function DayTypeLabel({ dayType }) {
 
 export function Chip({ label, selected, onClick, large }) {
   return html`<button class="chip ${selected ? 'selected' : ''} ${large ? 'large' : ''}" onClick=${onClick}>${label}</button>`;
+}
+
+/// A number with − and + on either side; the number itself can be typed.
+export function NumberStepper({ label, value, min = 0, max = 999, step = 1, onChange }) {
+  const clamp = n => Math.max(min, Math.min(max, n));
+  return html`<label class="col" style="gap:6px;flex:1;min-width:0">
+    <span class="label">${label}</span>
+    <div class="stepper wide">
+      <button aria-label="Less" onClick=${e => { e.preventDefault(); onChange(clamp(value - step)); }}>
+        <${Icon} name="minus" size=${15} weight=${2.2} /></button>
+      <input inputmode="numeric" value=${value} aria-label=${label}
+        onInput=${e => { if (/^\d+$/.test(e.target.value.trim())) onChange(clamp(Number(e.target.value))); }} />
+      <button aria-label="More" onClick=${e => { e.preventDefault(); onChange(clamp(value + step)); }}>
+        <${Icon} name="plus" size=${15} weight=${2.2} /></button>
+    </div>
+  </label>`;
 }
 
 export function Switch({ on, onChange, label }) {

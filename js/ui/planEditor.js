@@ -15,7 +15,7 @@ const clone = value => JSON.parse(JSON.stringify(value));
 
 // MARK: - Exercise picker (Swift: ExercisePickerSheet)
 
-export function ExercisePickerSheet({ onSelect, onClose }) {
+export function ExercisePickerSheet({ onSelect, onClose, title = 'Add Exercise' }) {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState(null);
 
@@ -24,7 +24,7 @@ export function ExercisePickerSheet({ onSelect, onClose }) {
     .filter(e => (!query || e.name.toLowerCase().includes(query)) && (!category || e.category === category))
     .sort((a, b) => a.name.localeCompare(b.name));
 
-  return html`<${Sheet} title="Add Exercise" left=${{ label: 'Cancel', onClick: onClose }} onClose=${onClose}>
+  return html`<${Sheet} title=${title} left=${{ label: 'Cancel', onClick: onClose }} onClose=${onClose}>
     <div style="padding:12px var(--gutter) 8px">
       <label class="searchbar">
         <${Icon} name="search" size=${15} />
@@ -45,7 +45,7 @@ export function ExercisePickerSheet({ onSelect, onClose }) {
         <div style="min-width:0">
           <div class="t-sub medium">${exercise.name}</div>
           <div class="mono c-subtle" style="font-size:11px;margin-top:2px">
-            ${exercise.muscleGroups.map(m => MUSCLE_GROUPS[m]).join(' · ')}
+            ${[CATEGORIES[exercise.category]?.name, ...exercise.muscleGroups.map(m => MUSCLE_GROUPS[m])].join(' · ')}
           </div>
         </div>
       </button>`)}

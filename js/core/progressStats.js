@@ -11,7 +11,9 @@ import { baseValue, bestActualValue, metricKind, targetValueAt } from './progres
 
 // A series is { kind, points: [{ date, target, actual }], currentTarget }.
 // `kind` is 'weight' | 'reps' | 'duration' | 'score'; values are in the
-// stored unit (kg, reps, seconds).
+// stored unit (kg, reps, seconds). An exercise the plan sets no target for —
+// one done in quick sessions, say — has `target` and `currentTarget` null:
+// its chart is simply what was done.
 
 /// First slot per exercise that has a progressable target, in plan order.
 function baseSlots(plan) {
@@ -24,11 +26,31 @@ function baseSlots(plan) {
   return slots;
 }
 
-/// Exercises that get their own tab in the progress drawer.
+/// Exercises the plan sets a target for, in plan order.
 export function trackableExercises(plan, exercises) {
   return [...baseSlots(plan).keys()]
     .map(id => exercises.find(e => e.id === id))
     .filter(Boolean);
+}
+
+/// Every exercise with something to chart: the plan's, then any other that
+/// has numbers logged (most recently trained first). Progress is shown for
+/// what you do, whether or not a plan asked for it.
+export function chartableExercises(plan, exercises, sessions) {
+  const planned = plan ? trackableExercises(plan, exercises) : [];
+  const seen = new Set(planned.map(e => e.id));
+  const others = [];
+  const newestFirst = sessions.filter(s => s.completedAt).sort((a, b) => toDate(b.date) - toDate(a.date));
+  for (const session of newestFirst) {
+    for (const set of session.sets) {
+      if (!set.isCompleted || seen.has(set.exerciseID)) continue;
+      if (set.repsCompleted == null && set.weightKg == null && set.durationSeconds == null) continue;
+      seen.add(set.exerciseID);
+      const exercise = exercises.find(e => e.id === set.exerciseID);
+      if (exercise) others.push(exercise);
+    }
+  }
+  return [...planned, ...others];
 }
 
 const completedSetsFor = (session, exerciseID) =>
@@ -36,9 +58,33 @@ const completedSetsFor = (session, exerciseID) =>
 
 const byDate = (a, b) => toDate(a.date) - toDate(b.date);
 
+/// What was done, for an exercise no plan target applies to. The metric is
+/// read off the log: weight if any was entered, else reps, else time.
+function loggedSeries(exercise, sessions) {
+  const logs = sessions
+    .filter(s => s.completedAt)
+    .map(session => ({ date: session.date, sets: completedSetsFor(session, exercise.id) }))
+    .filter(log => log.sets.length > 0);
+  const all = logs.flatMap(log => log.sets);
+  const field = all.some(s => s.weightKg > 0) ? 'weightKg'
+    : all.some(s => s.repsCompleted != null) ? 'repsCompleted'
+    : all.some(s => s.durationSeconds != null) ? 'durationSeconds'
+    : null;
+  if (!field) return null;
+  const kind = { weightKg: 'weight', repsCompleted: 'reps', durationSeconds: 'duration' }[field];
+  const points = logs
+    .map(log => {
+      const values = log.sets.map(s => s[field]).filter(v => v != null);
+      return values.length ? { date: log.date, target: null, actual: Math.max(...values) } : null;
+    })
+    .filter(Boolean)
+    .sort(byDate);
+  return { kind, points, currentTarget: null };
+}
+
 export function seriesFor(exercise, plan, startDate, sessions, now = new Date()) {
-  const slot = baseSlots(plan).get(exercise.id);
-  if (!slot) return null;
+  const slot = plan && startDate ? baseSlots(plan).get(exercise.id) : null;
+  if (!slot) return loggedSeries(exercise, sessions);
 
   const points = sessions
     .filter(s => s.completedAt)
@@ -89,8 +135,17 @@ export function overallSeries(plan, startDate, sessions, now = new Date()) {
 }
 
 /// How far the latest actual value sits from today's target, in percent.
+/// null when there is no target to compare with.
 export function deltaVsTarget(series) {
   const last = series.points[series.points.length - 1];
-  if (!last || series.currentTarget === 0) return null;
+  if (!last || series.currentTarget == null || series.currentTarget === 0) return null;
   return (last.actual - series.currentTarget) / series.currentTarget * 100;
+}
+
+/// How far the latest value sits from the first one logged, in percent.
+/// null with fewer than two points.
+export function changeSinceFirst(series) {
+  const first = series.points[0], last = series.points[series.points.length - 1];
+  if (!first || first === last || first.actual === 0) return null;
+  return (last.actual - first.actual) / first.actual * 100;
 }

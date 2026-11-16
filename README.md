@@ -23,32 +23,41 @@ filene slik de ligger.
 
 ```
 index.html              Skallet: meta-tagger og to tomme <div>
-css/app.css             All stil. Design-tokens (farger, radius, fonter) øverst
-js/main.js              Inngang: de fire fanene + PWA-oppsett
+css/app.css             All stil. Design-tokens (farger, radius, fonter) øverst,
+                        én blokk for mørkt tema og én for lyst
+js/main.js              Inngang: de fire fanene, tema, velkomstguide, PWA-oppsett
 
 js/core/                Ren logikk — ingen DOM. Kjører og testes i Node
-  models.js               Datamodellen og enum-ene
-  builtin.js              33 innebygde øvelser + 3 planer
+  models.js               Datamodellen og enum-ene (kategorier, utstyr, hopp-over-grunner)
+  builtin.js              Gjør dataene under til bibliotek og planmaler
+  data/exercises.js       253 øvelser: tekst, kategori, utstyr, nivå, tier
+  data/plans.js           14 planmaler, skrevet med øvelsesnavn
+  data/icons.js           Hvilke piktogrammer som finnes (skrives av `npm run shell`)
   dates.js                Kalenderregning (det appen bruker av Calendar)
   planResolver.js         Hvilken plandag gjelder en gitt dato
   progression.js          +2,5 % per måned
-  progressStats.js        Mål mot faktisk, til grafene
-  units.js                Enheter (kg/lbs, sek/min), tolking av tall, standardmål
+  progressStats.js        Grafene: mål mot faktisk, eller bare hva som er gjort
+  recommend.js            Hvilken plan passer svarene i velkomstguiden
+  units.js                Enheter, tolking av tall, standardmål, intervallsteg
   backup.js               .oddform.json — samme format som iOS
   store.js                All tilstand + lagring
 
 js/ui/                  Skjermene
-  common.js               Ark, varsler, ikonflis, ring …
+  common.js               Ark, varsler, ikonflis, ring, tallvelger …
   icons.js                Strekikoner (erstatter SF Symbols)
+  onboarding.js           Velkomstguiden: tre spørsmål og et planforslag
   today.js  session.js    Today-fanen og aktiv økt
-  plan.js                 Plan-fanen: tidslinje og fremdrift
+  timer.js                Intervalltimeren (fullskjerm nedtelling)
+  plan.js  chart.js       Plan-fanen: tidslinje, fremdrift og selve grafen
   planPicker.js           Velg / lag / kopier / slett plan
   planEditor.js           Rediger øvelsene på en dag
   library.js              Bibliotek og øvelsesark
   settings.js             Innstillinger, eksport og import
 
 js/vendor/preact-htm.js Preact + htm (13 kB), lagt inn som fil
-img/exercises/          Øvelsesikonene, nedskalert fra iOS-repoet
+img/exercises/          Piktogrammene: hvite former med gjennomsiktig bakgrunn.
+                        Tegnes som maske og får kategoriens farge i begge temaer
+tools/                  make-icons.py (tegner piktogrammer), shell.mjs (fillister)
 sw.js                   Offline-cache for appfilene
 tests/                  Tester for js/core og for sw.js
 arkiv/                  Den gamle treningsloggen som lå her før
@@ -76,7 +85,8 @@ funksjon tar tilstand inn og gir et view ut. `useState` er `@State`,
 
 ```sh
 npm start        # http://localhost:5173
-npm test         # 37 tester, ingen avhengigheter
+npm test         # 43 tester, ingen avhengigheter
+npm run shell    # etter at filer er lagt til/fjernet: oppdaterer sw.js og data/icons.js
 ```
 
 `npm start` er bare `python3 -m http.server`. Filene må serveres over http —
@@ -85,8 +95,10 @@ laste JS-moduler fra `file://`.
 
 ## Endre design
 
-Nesten alt du vil skru på ligger i de 30 første linjene av `css/app.css`:
-farger, hjørneradius, fonter, sidemarg. Resten av fila er delt inn etter
+Nesten alt du vil skru på ligger øverst i `css/app.css`: farger,
+hjørneradius, fonter, sidemarg. Fargene står to ganger — én blokk for mørkt
+tema og én for lyst (som også brukes når telefonen står i lys modus og
+Settings → Appearance er «System»). Resten av fila er delt inn etter
 skjerm, i samme rekkefølge som fanene.
 
 ## På telefonen
@@ -120,6 +132,8 @@ kjenner. Øvelses-ID-ene er de samme på begge plattformer.
 |---|---|---|
 | «…»-knapp på hver plan (Edit / Copy / Delete) | Sveip på raden | Sveip er upålitelig i en nettleser |
 | Ingen Pro: alt er åpent, også backup og egne øvelser | Backup og egne øvelser krever Pro | Webversjonen er gratisutgaven |
+| 253 øvelser i seks kategorier, 17 planmaler | 33 øvelser i fire kategorier, 3 planer | Ikke portet ennå |
+| Velkomstguide, intervalltimer, «hopp over», quick sessions med reps, lyst tema, backup-ikon i headeren | Finnes ikke | Ikke portet ennå — prøves ut her først |
 | Uka starter alltid mandag | Følger telefonens region | Planmodellen teller 1 = mandag |
 | Datoer vises på engelsk | Følger telefonens språk | Resten av appen er på engelsk |
 
@@ -143,6 +157,16 @@ valgene i `store.js` / `AppData.swift`.
 - Vekt lagres alltid i kg og tid alltid i sekunder; enheten styrer bare
   visningen (kg/lbs under Settings, sek/min/t per øvelse).
 
+- En quick session er én øvelse med det målet du mener: «12 push-ups» telles,
+  «5 min burpees» tas på tid. «+» logger en hvilken som helst øvelse én gang,
+  uten at den må lagres som kort.
+- Intervalldager (HIIT) kjøres som en sirkel med nedtelling: runde 1 av hver
+  øvelse, så runde 2. Timeren huker av hvert intervall; reps og vekt kan
+  fylles inn etterpå. Alle sett på tid har en egen timerknapp.
+- En planlagt økt kan hoppes over med en grunn (syk, dårlig tid, sliten,
+  bortreist, annet). Plan-fanen teller opp de siste fire ukene: gjort,
+  hoppet over (og hvorfor), ikke logget.
+
 **Historikk**
 
 - En ferdig økt tar med seg et øyeblikksbilde av planen (`plannedSets`,
@@ -152,6 +176,9 @@ valgene i `store.js` / `AppData.swift`.
 - Å velge planen som allerede er aktiv, endrer ingenting. Bare «Start again»
   på et ferdig program setter ny startdato.
 
+- Alt som er logget med tall får graf, enten det sto i planen eller var en
+  quick session. Uten mål i planen viser grafen bare hva som er gjort.
+
 **Progresjon**
 
 - +2,5 % av opprinnelig mål per hele måned. Vekt rundes til nærmeste halve
@@ -159,11 +186,45 @@ valgene i `store.js` / `AppData.swift`.
 - Målet regnes for datoen det gjelder. Økta, tidslinja og grafen viser
   derfor samme tall, og et sett som traff målet tegnes aldri som bom.
 
+## Innhold, og hva som kan bli Pro
+
+Hver øvelse og hver planmal har et felt `tier`: `free` eller `pro`. Webappen
+viser alt uansett; feltet er der så skillet kan slås på som en ren
+dataendring den dagen det trengs.
+
+| | `free` | `pro` |
+|---|---|---|
+| Øvelser | De 33 opprinnelige + alt på nivå 1 som ikke krever utstyr (95) | Alt som krever utstyr eller erfaring (158) |
+| Planer | Home Maintenance, Beginner Strength, Mobility & Stretch, Calisthenics Basics, Tabata Starter, Morning Yoga Flow, Dumbbell Full Body | De ti andre |
+
+Endre `tier` direkte i `js/core/data/exercises.js` eller `data/plans.js` for
+å flytte noe.
+
+## Piktogrammene
+
+`tools/make-icons.py` tegner ett piktogram per øvelse med Gemini sitt
+bilde-API, ut fra én setning per øvelse i `tools/icon-prompts.json`.
+150 av 253 er tegnet. Resten viser kategoriens symbol til de er laget:
+
+```sh
+python3 tools/make-icons.py     # tegner de som mangler (trenger GEMINI_API_KEY)
+npm run shell                   # forteller appen hvilke som finnes
+```
+
+Fem ble forkastet ved gjennomsyn (ramme, tekst eller to personer i bildet) og
+står blant de som mangler: assisted pistol squat, back lever, sled push,
+dumbbell Romanian deadlift og cossack squat. Se over nye bilder før de
+sjekkes inn.
+
 ## Kjente begrensninger
 
 - Progresjonen følger kalenderen, ikke hva du faktisk klarte.
 - Med få reps skjer økningen sjelden: 8 reps blir 9 først etter tre måneder, 5 reps blir 6 etter fire.
 - Dager før en plan ble startet kan ikke logges i ettertid.
+- Reps på ettbeinsøvelser er per side; modellen har ikke noe felt for det.
+- Intervalltimeren kan ikke gi lyd eller vibrasjon når skjermen er låst
+  (nettleserbegrensning). Den holder skjermen våken mens den går.
+- Sirkelformater uten faste pauser (AMRAP) kan ikke uttrykkes ennå.
 - Søket i biblioteket er engelsk og tåler ikke skrivefeil.
 - Kompatibiliteten med iOS er testet mot Swift-structene slik de står i
   koden, ikke mot en kjørende iOS-build.

@@ -3,8 +3,11 @@
 
 import { html, useState } from '../vendor/preact-htm.js';
 import { ALL_ICONS } from '../core/builtin.js';
-import { CATEGORIES, MUSCLE_GROUPS, newExercise } from '../core/models.js';
-import { Alert, Chip, ExerciseIcon, Sheet, store } from './common.js';
+import { format } from '../core/dates.js';
+import { CATEGORIES, EQUIPMENT, MUSCLE_GROUPS, newExercise } from '../core/models.js';
+import { seriesFor } from '../core/progressStats.js';
+import { ProgressChart, TrendLabel, seriesUnit } from './chart.js';
+import { Alert, Chip, ExerciseIcon, Sheet, describeSets, store } from './common.js';
 import { Icon } from './icons.js';
 
 export function LibraryView() {
@@ -102,6 +105,32 @@ function MusclePills({ exercise }) {
   </div>`;
 }
 
+/// What you have done with this exercise: a chart of the best set per
+/// session and the last time it was logged. Shown for every exercise with
+/// numbers behind it, whether a plan asked for it or it was a quick session.
+function History({ exercise }) {
+  const series = seriesFor(
+    exercise, store.activePlan, store.state.settings.activePlanStartDate, store.state.sessions);
+  const last = store.lastPerformance(exercise.id);
+  if (!series?.points.length && !last) return null;
+  const unit = series && seriesUnit(series);
+  const slot = { unit1: 'Reps', unit2: 'Sek', targetDurationSeconds: last?.sets[0]?.durationSeconds };
+
+  return html`
+    <div class="divider flush"></div>
+    <div class="col" style="gap:10px">
+      <div class="row">
+        <span class="label">Your history${series?.points.length ? ` · best set, ${unit.name}` : ''}</span>
+        <span class="spacer"></span>
+        ${series && html`<${TrendLabel} series=${series} small />`}
+      </div>
+      ${series?.points.length > 1 && html`<div class="card chart-box"><${ProgressChart} series=${series} unit=${unit} /></div>`}
+      ${last && html`<div class="mono t-caption c-subtle">
+        Last time · ${format.mediumDate(last.date)} · ${describeSets(last.sets, slot, store.state.settings.preferredUnit)}
+      </div>`}
+    </div>`;
+}
+
 /// Step-by-step instructions and tips — the same on the Library detail and
 /// behind the "i" button during a session.
 function HowTo({ exercise }) {
@@ -151,11 +180,14 @@ function ExerciseDetailSheet({ exercise, onClose }) {
       <div class="divider flush"></div>
       <div class="col" style="gap:10px">
         <span class="label">Details</span>
-        <div class="row" style="gap:16px">
+        <div class="row" style="gap:10px;flex-wrap:wrap">
           ${infoChip('Category', CATEGORIES[exercise.category].name)}
-          ${infoChip('Type', exercise.isCustom ? 'Custom' : 'Built-in')}
+          ${infoChip('Needs', EQUIPMENT[exercise.equipment] ?? EQUIPMENT.none)}
+          ${!exercise.isCustom && infoChip('Level', ['Beginner', 'Intermediate', 'Advanced'][exercise.level - 1] ?? 'Beginner')}
+          ${exercise.isCustom && infoChip('Type', 'Custom')}
         </div>
       </div>
+      <${History} exercise=${exercise} />
       <${HowTo} exercise=${exercise} />
       ${exercise.notes && html`
         <div class="divider flush"></div>
@@ -193,7 +225,7 @@ export function ExerciseInfoButton({ exercise }) {
     ${open && html`<${ExerciseInfoSheet} exercise=${exercise} onClose=${() => setOpen(false)} />`}`;
 }
 
-function ExerciseInfoSheet({ exercise, onClose }) {
+export function ExerciseInfoSheet({ exercise, onClose }) {
   const hasText = exercise.instructions.length > 0 || exercise.tips.length > 0;
   return html`<${Sheet} size="medium" right=${{ label: 'Done', strong: true, onClick: onClose }} onClose=${onClose}>
     <div class="col" style="gap:28px;padding:8px var(--gutter) 40px">
@@ -220,6 +252,8 @@ function CreateExerciseSheet({ editing = null, onClose }) {
   const [muscles, setMuscles] = useState(editing?.muscleGroups ?? []);
   const [notes, setNotes] = useState(editing?.notes ?? '');
   const [icon, setIcon] = useState(editing?.customIconName ?? null);
+  // What you count when you do it. It decides how a quick session of it starts.
+  const [tracking, setTracking] = useState(editing?.tracking ?? 'reps');
   const [pickingIcon, setPickingIcon] = useState(false);
 
   // Two exercises with the same name cannot be told apart in a plan.
@@ -232,7 +266,7 @@ function CreateExerciseSheet({ editing = null, onClose }) {
 
   const save = () => {
     if (!isValid) return;
-    const fields = { name: name.trim(), category, muscleGroups: muscles, notes, customIconName: icon };
+    const fields = { name: name.trim(), category, muscleGroups: muscles, notes, customIconName: icon, tracking };
     if (editing) store.updateExercise({ ...editing, ...fields });
     else store.addCustomExercise(newExercise({ ...fields, isCustom: true }));
     onClose();
@@ -271,6 +305,14 @@ function CreateExerciseSheet({ editing = null, onClose }) {
     </div>
 
     <div class="form-section">
+      <span class="label">Measured in</span>
+      <div class="chip-wrap">
+        <${Chip} label="Reps" selected=${tracking === 'reps'} onClick=${() => setTracking('reps')} />
+        <${Chip} label="Time" selected=${tracking !== 'reps'} onClick=${() => setTracking('time')} />
+      </div>
+    </div>
+
+    <div class="form-section">
       <span class="label">Muscle groups</span>
       <div class="chip-wrap">
         ${Object.entries(MUSCLE_GROUPS).map(([id, label]) => html`
@@ -298,7 +340,7 @@ function CreateExerciseSheet({ editing = null, onClose }) {
 
 /// Swift: IconPickerSheet
 function IconPickerSheet({ onSelect, onClose }) {
-  const label = icon => icon.replace('exercise-', '').replace('dumbbell-', '').replaceAll('-', ' ');
+  const label = icon => icon.replace('exercise-', '').replaceAll('-', ' ');
   return html`<${Sheet} size="medium" title="Choose Icon" left=${{ label: 'Cancel', onClick: onClose }} onClose=${onClose}>
     <div class="icon-grid">
       ${ALL_ICONS.map(icon => html`
