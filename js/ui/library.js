@@ -59,7 +59,7 @@ export function LibraryView() {
             <div style="flex:1;min-width:0">
               <div class="row" style="gap:6px">
                 <span class="t-sub medium truncate">${exercise.name}</span>
-                ${exercise.isCustom && html`<span class="tag">PRO</span>`}
+                ${exercise.isCustom && html`<span class="tag">CUSTOM</span>`}
               </div>
               <div class="mono t-caption2 c-subtle truncate" style="margin-top:3px">
                 ${exercise.muscleGroups.map(m => MUSCLE_GROUPS[m]).join(' · ')}
@@ -102,6 +102,31 @@ function MusclePills({ exercise }) {
   </div>`;
 }
 
+/// Step-by-step instructions and tips — the same on the Library detail and
+/// behind the "i" button during a session.
+function HowTo({ exercise }) {
+  return html`
+    ${exercise.instructions.length > 0 && html`
+      <div class="divider flush"></div>
+      <div class="col" style="gap:12px">
+        <span class="label">How to do it</span>
+        ${exercise.instructions.map((step, i) => html`<div class="row" style="gap:12px;align-items:flex-start">
+          <span class="step-num">${i + 1}</span>
+          <span class="t-sub" style="line-height:1.4;padding-top:1px">${step}</span>
+        </div>`)}
+      </div>`}
+
+    ${exercise.tips.length > 0 && html`
+      <div class="divider flush"></div>
+      <div class="col" style="gap:10px">
+        <span class="label">Tips & common mistakes</span>
+        ${exercise.tips.map(tip => html`<div class="row" style="gap:10px;align-items:flex-start">
+          <span class="c-accent" style="padding-top:3px"><${Icon} name="lightbulb" size=${13} /></span>
+          <span class="t-sub" style="line-height:1.4;opacity:0.85">${tip}</span>
+        </div>`)}
+      </div>`}`;
+}
+
 // MARK: - Detail (Swift: ExerciseDetailSheet)
 
 function ExerciseDetailSheet({ exercise, onClose }) {
@@ -131,6 +156,7 @@ function ExerciseDetailSheet({ exercise, onClose }) {
           ${infoChip('Type', exercise.isCustom ? 'Custom' : 'Built-in')}
         </div>
       </div>
+      <${HowTo} exercise=${exercise} />
       ${exercise.notes && html`
         <div class="divider flush"></div>
         <div class="col" style="gap:8px">
@@ -146,7 +172,7 @@ function ExerciseDetailSheet({ exercise, onClose }) {
 
     ${editing && html`<${CreateExerciseSheet} editing=${exercise} onClose=${() => setEditing(false)} />`}
     ${confirmDelete && html`<${Alert} title="Delete Exercise?"
-      message=${`This will remove "${exercise.name}" from your library. Any plans using it won't be affected.`}
+      message=${`This will remove "${exercise.name}" from your library. Plans that use it will skip it; sessions already logged keep their numbers.`}
       buttons=${[
         { label: 'Cancel', role: 'cancel', onClick: () => setConfirmDelete(false) },
         { label: 'Delete', role: 'destructive', onClick: () => { onClose(); store.deleteCustomExercise(exercise); } },
@@ -177,25 +203,7 @@ function ExerciseInfoSheet({ exercise, onClose }) {
         <div class="divider flush"></div>
         <div class="col" style="gap:10px"><span class="label">Muscles worked</span><${MusclePills} exercise=${exercise} /></div>`}
 
-      ${exercise.instructions.length > 0 && html`
-        <div class="divider flush"></div>
-        <div class="col" style="gap:12px">
-          <span class="label">How to do it</span>
-          ${exercise.instructions.map((step, i) => html`<div class="row" style="gap:12px;align-items:flex-start">
-            <span class="step-num">${i + 1}</span>
-            <span class="t-sub" style="line-height:1.4;padding-top:1px">${step}</span>
-          </div>`)}
-        </div>`}
-
-      ${exercise.tips.length > 0 && html`
-        <div class="divider flush"></div>
-        <div class="col" style="gap:10px">
-          <span class="label">Tips & common mistakes</span>
-          ${exercise.tips.map(tip => html`<div class="row" style="gap:10px;align-items:flex-start">
-            <span class="c-accent" style="padding-top:3px"><${Icon} name="lightbulb" size=${13} /></span>
-            <span class="t-sub" style="line-height:1.4;opacity:0.85">${tip}</span>
-          </div>`)}
-        </div>`}
+      <${HowTo} exercise=${exercise} />
 
       ${!hasText && html`
         <div class="divider flush"></div>
@@ -214,8 +222,11 @@ function CreateExerciseSheet({ editing = null, onClose }) {
   const [icon, setIcon] = useState(editing?.customIconName ?? null);
   const [pickingIcon, setPickingIcon] = useState(false);
 
-  const locked = !store.state.settings.isPro && !editing;
-  const isValid = name.trim().length > 0 && muscles.length > 0;
+  // Two exercises with the same name cannot be told apart in a plan.
+  const isDuplicate = store.state.exercises.some(
+    e => e.id !== editing?.id && e.name.trim().toLowerCase() === name.trim().toLowerCase(),
+  );
+  const isValid = name.trim().length > 0 && muscles.length > 0 && !isDuplicate;
 
   const toggleMuscle = id => setMuscles(muscles.includes(id) ? muscles.filter(m => m !== id) : [...muscles, id]);
 
@@ -226,17 +237,6 @@ function CreateExerciseSheet({ editing = null, onClose }) {
     else store.addCustomExercise(newExercise({ ...fields, isCustom: true }));
     onClose();
   };
-
-  const proGate = html`<div class="col" style="gap:20px;align-items:center;justify-content:center;min-height:60vh;padding:0 32px;text-align:center">
-    <${Icon} name="lock" size=${44} class="c-accent" />
-    <div class="t-title2">Pro Feature</div>
-    <p class="mono t-sub c-subtle" style="line-height:1.45">
-      Custom exercises are available with Odd Form Pro.<br />Unlock unlimited exercises, plans, and history.
-    </p>
-    <button class="btn-primary" style="letter-spacing:0;border-radius:var(--radius-card)"
-      onClick=${() => store.updateSettings({ isPro: true })}>Unlock Pro</button>
-    <p class="mono t-caption2 c-subtle">Prototype: this switches Pro on without a purchase.</p>
-  </div>`;
 
   const form = html`<div class="form">
     <h2 class="t-title2" style="padding-top:8px">${editing ? 'Edit Exercise' : 'New Exercise'}</h2>
@@ -259,6 +259,7 @@ function CreateExerciseSheet({ editing = null, onClose }) {
       <span class="label">Name</span>
       <input class="field" placeholder="Exercise name" value=${name} onInput=${e => setName(e.target.value)}
         autocomplete="off" enterkeyhint="done" />
+      ${isDuplicate && html`<span class="mono t-caption2 c-red">The library already has an exercise with this name.</span>`}
     </div>
 
     <div class="form-section">
@@ -288,9 +289,9 @@ function CreateExerciseSheet({ editing = null, onClose }) {
 
   return html`<${Sheet}
     left=${{ label: 'Cancel', onClick: onClose }}
-    right=${!locked && { label: editing ? 'Save' : 'Add', strong: true, disabled: !isValid, onClick: save }}
+    right=${{ label: editing ? 'Save' : 'Add', strong: true, disabled: !isValid, onClick: save }}
     onClose=${onClose}>
-    ${locked ? proGate : form}
+    ${form}
     ${pickingIcon && html`<${IconPickerSheet} onSelect=${setIcon} onClose=${() => setPickingIcon(false)} />`}
   <//>`;
 }

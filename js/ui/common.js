@@ -6,6 +6,7 @@ import { html, render, useEffect, useLayoutEffect, useReducer, useRef } from '..
 import { iconAssetName } from '../core/builtin.js';
 import { CATEGORIES, DAY_TYPES, MODIFIERS } from '../core/models.js';
 import { createStore } from '../core/store.js';
+import { UNIT_LABELS, countUnit, formatWeight, secondsToUnit, timeUnit, trimNumber } from '../core/units.js';
 import { Icon } from './icons.js';
 
 // MARK: - Store
@@ -188,18 +189,48 @@ export function ModifierBadges({ modifiers }) {
   </div>`;
 }
 
-/// "3 × 8 Reps", "3 sets", "30m", "1m30s". Swift: DayDetailPanel.slotDescription
-export function slotDescription(slot) {
-  if (slot.targetSets != null && slot.targetReps != null) return `${slot.targetSets} × ${slot.targetReps} ${slot.unit1}`;
-  if (slot.targetSets != null) return `${slot.targetSets} sets`;
-  if (slot.targetDurationSeconds != null) {
-    const d = slot.targetDurationSeconds;
-    return `${Math.floor(d / 60)}m${d % 60 > 0 ? `${d % 60}s` : ''}`;
+const allEqual = values => values.every(v => v === values[0]);
+const times = (values, label) =>
+  `${values.length > 1 && allEqual(values) ? `${values.length} × ${values[0]}` : values.join(' / ')} ${label}`;
+
+/// What a slot asks for: "3 × 8 reps · 20 kg", "3 × 45 sec", "30 min", "3 sets".
+/// Swift: DayDetailPanel.slotDescription
+export function slotDescription(slot, weightUnit = 'kg') {
+  const parts = [];
+  const time = timeUnit(slot);
+  const duration = slot.targetDurationSeconds != null
+    ? `${trimNumber(secondsToUnit(slot.targetDurationSeconds, time))} ${UNIT_LABELS[time]}`
+    : null;
+  const sets = slot.targetSets;
+
+  if (slot.targetReps != null) {
+    const reps = `${slot.targetReps} ${UNIT_LABELS[countUnit(slot)]}`;
+    parts.push(sets != null ? `${sets} × ${reps}` : reps);
+    if (duration) parts.push(duration);
+  } else if (duration) {
+    parts.push(sets != null && sets > 1 ? `${sets} × ${duration}` : duration);
+  } else if (sets != null) {
+    parts.push(`${sets} ${sets === 1 ? 'set' : 'sets'}`);
   }
-  return '—';
+  if (slot.targetWeightKg != null && slot.targetWeightKg > 0) {
+    parts.push(`${formatWeight(slot.targetWeightKg, weightUnit)} ${weightUnit}`);
+  }
+  return parts.join(' · ') || '—';
 }
 
-/// 20 -> "20.0", 42.5 -> "42.5"
-export function oneDecimal(value) {
-  return Number(value).toFixed(1);
+/// What was actually done in `sets` of one exercise: "3 × 8 reps · 20 kg",
+/// "8 / 8 / 6 reps · 22.5 kg", "2 × 45 sec". The weight is the heaviest set.
+export function describeSets(sets, slot, weightUnit = 'kg') {
+  const sorted = [...sets].sort((a, b) => a.setNumber - b.setNumber);
+  const parts = [];
+  const reps = sorted.map(s => s.repsCompleted).filter(v => v != null);
+  if (reps.length) parts.push(times(reps, UNIT_LABELS[countUnit(slot)]));
+  const seconds = sorted.map(s => s.durationSeconds).filter(v => v != null);
+  if (seconds.length) {
+    const time = timeUnit(slot);
+    parts.push(times(seconds.map(v => trimNumber(secondsToUnit(v, time))), UNIT_LABELS[time]));
+  }
+  const weights = sorted.map(s => s.weightKg).filter(v => v != null && v > 0);
+  if (weights.length) parts.push(`${formatWeight(Math.max(...weights), weightUnit)} ${weightUnit}`);
+  return parts.join(' · ') || `${sorted.length} ${sorted.length === 1 ? 'set' : 'sets'}`;
 }

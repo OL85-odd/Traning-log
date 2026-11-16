@@ -21,6 +21,7 @@ export function PlanPickerSheet({ onClose }) {
   const [menuFor, setMenuFor] = useState(null);       // plan
   const [copying, setCopying] = useState(null);       // { plan, name }
   const [deleting, setDeleting] = useState(null);     // plan
+  const [created, setCreated] = useState(null);       // plan just created, not yet in use
 
   const copyPlan = () => {
     const { plan, name } = copying;
@@ -40,7 +41,11 @@ export function PlanPickerSheet({ onClose }) {
           const days = trainingDayCount(plan);
           return html`<div key=${plan.id} class="list-row" style="padding:0">
             <button class="row pressable" style="flex:1;min-width:0;gap:8px;padding:11px 0 11px 16px"
-              onClick=${() => { store.setActivePlan(plan); onClose(); }}>
+              onClick=${() => {
+                // Tapping the plan already in use just closes the sheet; it does not start it over.
+                store.setActivePlan(plan);
+                onClose();
+              }}>
               <div style="flex:1;min-width:0">
                 <div class="medium truncate">${plan.name}</div>
                 <div class="mono t-caption c-subtle" style="margin-top:4px">
@@ -81,7 +86,14 @@ export function PlanPickerSheet({ onClose }) {
         { label: 'Delete', role: 'destructive', onClick: () => { store.deletePlan(deleting.id); setDeleting(null); } },
       ]} />`}
 
-    ${creating && html`<${CreatePlanSheet} onClose=${() => setCreating(false)} />`}
+    ${created && html`<${Alert} title="Use this plan now?"
+      message=${`"${created.name}" is saved. Start it today, or keep ${store.activePlan ? `"${store.activePlan.name}"` : 'things as they are'} for now.`}
+      buttons=${[
+        { label: 'Not now', onClick: () => setCreated(null) },
+        { label: 'Start today', role: 'primary', onClick: () => { store.setActivePlan(created); setCreated(null); onClose(); } },
+      ]} />`}
+
+    ${creating && html`<${CreatePlanSheet} onClose=${() => setCreating(false)} onCreated=${setCreated} />`}
     ${editing && html`<${CreatePlanSheet} key=${editing.id} editing=${editing} onClose=${() => setEditing(null)} />`}
   <//>`;
 }
@@ -98,7 +110,7 @@ function dayLabel(day) {
   return type;
 }
 
-export function CreatePlanSheet({ editing = null, onClose }) {
+export function CreatePlanSheet({ editing = null, onClose, onCreated }) {
   const [step, setStep] = useState(editing ? 'form' : 'chooseType');
   const [name, setName] = useState(editing?.name ?? '');
   const [planMode, setPlanMode] = useState(editing?.planMode ?? 'weeklyCycle');
@@ -138,7 +150,7 @@ export function CreatePlanSheet({ editing = null, onClose }) {
   const save = () => {
     if (!isValid) return;
     const plan = newPlan({
-      name: name.trim(), planMode, days, progressionEnabled: progression,
+      name: name.trim(), planMode, days, progressionEnabled: progression, isCustom: true,
       // Editing keeps the plan's identity and its pause history.
       ...(editing && {
         id: editing.id,
@@ -150,6 +162,7 @@ export function CreatePlanSheet({ editing = null, onClose }) {
     });
     if (editing) store.updatePlan(plan); else store.addPlan(plan);
     onClose();
+    if (!editing) onCreated?.(plan);
   };
 
   const typeCard = (icon, color, title, subtitle, onClick) => html`
@@ -178,6 +191,8 @@ export function CreatePlanSheet({ editing = null, onClose }) {
     </div>`;
 
   const trainingIndexes = days.map((_, i) => i).filter(i => days[i].dayType !== 'rest');
+  // A week has seven days; a program can always grow by one more.
+  const canAddDay = planMode !== 'weeklyCycle' || days.some(d => d.dayType === 'rest');
 
   const form = html`<div class="form">
     <div class="form-section">
@@ -216,9 +231,11 @@ export function CreatePlanSheet({ editing = null, onClose }) {
             </button>
           </div>`;
         })}
-        <button class="btn-soft tall" onClick=${addTrainingDay}>
-          <${Icon} name="plus-circle-fill" size=${18} />Add Training Day
-        </button>
+        ${canAddDay
+          ? html`<button class="btn-soft tall" onClick=${addTrainingDay}>
+              <${Icon} name="plus-circle-fill" size=${18} />Add Training Day
+            </button>`
+          : html`<p class="mono t-caption2 c-subtle center">Every day of the week is a training day.</p>`}
       </div>
     </div>
 

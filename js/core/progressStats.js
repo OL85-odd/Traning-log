@@ -1,13 +1,17 @@
 // Turns logged sessions into target-vs-actual chart series.
 // Swift: OddForm/Services/ProgressStats.swift
+//
+// The target on the chart is the same number the session screen showed that
+// day (see progression.js), so a set that met its target is never drawn as a
+// miss.
 
 import { toDate } from './dates.js';
 import { slotsOf } from './models.js';
-import {
-  MONTHLY_INCREASE, baseValue, bestActualValue, fractionalEffectiveMonths, metricKind, unitFor,
-} from './progression.js';
+import { baseValue, bestActualValue, metricKind, targetValueAt } from './progression.js';
 
-// A series is { unit, points: [{ date, target, actual }], currentTarget }.
+// A series is { kind, points: [{ date, target, actual }], currentTarget }.
+// `kind` is 'weight' | 'reps' | 'duration' | 'score'; values are in the
+// stored unit (kg, reps, seconds).
 
 /// First slot per exercise that has a progressable target, in plan order.
 function baseSlots(plan) {
@@ -33,54 +37,55 @@ const completedSetsFor = (session, exerciseID) =>
 const byDate = (a, b) => toDate(a.date) - toDate(b.date);
 
 export function seriesFor(exercise, plan, startDate, sessions, now = new Date()) {
-  // The first slot for this exercise anywhere in the plan, trackable or not.
-  const slot = plan.days.flatMap(slotsOf).find(s => s.exerciseID === exercise.id);
-  const base = slot ? baseValue(slot) : null;
-  if (base == null) return null;
-
-  const targetAt = date => base * (1 + MONTHLY_INCREASE * fractionalEffectiveMonths(plan, startDate, date));
+  const slot = baseSlots(plan).get(exercise.id);
+  if (!slot) return null;
 
   const points = sessions
     .filter(s => s.completedAt)
     .map(session => {
       const actual = bestActualValue(completedSetsFor(session, exercise.id), slot);
-      return actual == null ? null : { date: session.date, target: targetAt(session.date), actual };
+      if (actual == null) return null;
+      return { date: session.date, target: targetValueAt(slot, plan, startDate, session.date), actual };
     })
     .filter(Boolean)
     .sort(byDate);
 
-  return { unit: unitFor(slot), points, currentTarget: targetAt(now) };
+  return { kind: metricKind(slot), points, currentTarget: targetValueAt(slot, plan, startDate, now) };
 }
 
-/// "Progress Score": 100 = on pace with the original plan. Each session's
-/// score is the average of actual / original target across the exercises
-/// logged in it.
+/// "Progress Score": 100 = the original plan. Each session's score is the
+/// average of actual / original target across the exercises logged in it;
+/// its target is the same average taken over that day's targets.
 export function overallSeries(plan, startDate, sessions, now = new Date()) {
   if (!plan.progressionEnabled) return null;
-  const slots = baseSlots(plan);
-  if (slots.size === 0) return null;
+  const slots = [...baseSlots(plan)].filter(([, slot]) => baseValue(slot) > 0);
+  if (slots.length === 0) return null;
 
-  const targetAt = date => 100 * (1 + MONTHLY_INCREASE * fractionalEffectiveMonths(plan, startDate, date));
+  const average = values => values.reduce((a, b) => a + b, 0) / values.length;
+  const targetScore = (slot, date) => targetValueAt(slot, plan, startDate, date) / baseValue(slot) * 100;
 
   const points = sessions
     .filter(s => s.completedAt)
     .map(session => {
-      const ratios = [];
+      const actuals = [], targets = [], logged = [];
       for (const [exerciseID, slot] of slots) {
-        const base = baseValue(slot);
-        if (!(base > 0)) continue;
         const actual = bestActualValue(completedSetsFor(session, exerciseID), slot);
-        if (actual != null) ratios.push(actual / base);
+        if (actual == null) continue;
+        actuals.push(actual / baseValue(slot) * 100);
+        targets.push(targetScore(slot, session.date));
+        logged.push(slot);
       }
-      if (!ratios.length) return null;
-      const average = ratios.reduce((a, b) => a + b, 0) / ratios.length;
-      return { date: session.date, target: targetAt(session.date), actual: average * 100 };
+      if (!actuals.length) return null;
+      return { date: session.date, target: average(targets), actual: average(actuals), logged };
     })
     .filter(Boolean)
     .sort(byDate);
 
   if (!points.length) return null;
-  return { unit: 'score', points, currentTarget: targetAt(now) };
+  // Today's target for the same exercises the latest session held, so the
+  // "vs target" figure compares like with like.
+  const latest = points[points.length - 1].logged;
+  return { kind: 'score', points, currentTarget: average(latest.map(slot => targetScore(slot, now))) };
 }
 
 /// How far the latest actual value sits from today's target, in percent.

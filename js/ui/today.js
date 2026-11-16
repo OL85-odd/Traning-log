@@ -2,9 +2,10 @@
 // Swift: OddForm/Features/Today/TodayView.swift + Components/*
 
 import { html, useRef, useState } from '../vendor/preact-htm.js';
-import { addDays, dayKey, format, isSameDay, startOfWeek } from '../core/dates.js';
+import { addDays, dayKey, format, isSameDay, startOfWeek, toDate } from '../core/dates.js';
 import { DAY_TYPES, MODIFIERS, newQuickSession, slotsOf } from '../core/models.js';
 import { MAX_QUICK_SESSIONS } from '../core/store.js';
+import { estimatedMinutes } from '../core/units.js';
 import { DayTypeLabel, ExerciseIcon, Ring, store } from './common.js';
 import { Icon } from './icons.js';
 import { ExercisePickerSheet } from './planEditor.js';
@@ -55,18 +56,32 @@ function TodaySessionCard() {
   const [showPlanPicker, setShowPlanPicker] = useState(false);
   const plan = store.activePlan;
   const planDay = store.todayPlanDay;
-  const existing = store.todaySession;
+  const finished = store.todaySession;
+  const program = store.programProgress;
 
   const exerciseCount = slotsOf(planDay).length;
-  const plannedSets = slotsOf(planDay).reduce((sum, slot) => sum + (slot.targetSets ?? 1), 0);
-  const estimatedMinutes = Math.max(10, plannedSets * 3);
 
   let body;
-  if (!planDay) {
+  if (!plan) {
     body = html`<div class="col" style="gap:10px;align-items:flex-start">
       <div class="t-title3">No active plan</div>
       <div class="t-sub c-subtle">Choose a plan to get started.</div>
       <button class="link" onClick=${() => setShowPlanPicker(true)}>Choose plan →</button>
+    </div>`;
+  } else if (!planDay) {
+    // A finite program has run past its last day.
+    body = html`<div class="col" style="gap:12px">
+      <div class="row" style="gap:10px">
+        <${Icon} name="check-circle-fill" size=${22} class="c-green" />
+        <div>
+          <div class="t-title3">Program complete</div>
+          <div class="t-sub c-subtle" style="margin-top:2px">
+            You reached the end of ${plan.name}${program ? ` — ${program.weeks} weeks` : ''}.
+          </div>
+        </div>
+      </div>
+      <button class="btn-primary" onClick=${() => store.setActivePlan(plan, { restart: true })}>START AGAIN</button>
+      <button class="btn-soft tall" onClick=${() => setShowPlanPicker(true)}>Choose another plan</button>
     </div>`;
   } else if (planDay.dayType === 'rest') {
     body = html`<div class="row" style="gap:10px">
@@ -77,21 +92,28 @@ function TodaySessionCard() {
       </div>
     </div>`;
   } else {
+    const title = finished?.title || planDay.blocks[0]?.blockName || DAY_TYPES[planDay.dayType].name;
     body = html`
       <div class="col" style="gap:8px">
         <div class="row" style="gap:8px">
           <${DayTypeLabel} dayType=${planDay.dayType} />
-          <span class="mono t-caption c-subtle">· Week ${store.currentWeekNumber}</span>
+          <span class="mono t-caption c-subtle">
+            · Week ${program ? `${program.week} of ${program.weeks}` : store.currentWeekNumber}
+          </span>
         </div>
-        <h2 class="t-title">${planDay.blocks[0]?.blockName || DAY_TYPES[planDay.dayType].name}</h2>
-        <div class="row mono t-sub c-subtle" style="gap:16px">
-          <span class="row" style="gap:6px"><${Icon} name="dumbbell" size=${15} />${exerciseCount} exercises</span>
-          <span class="row" style="gap:6px"><${Icon} name="clock" size=${15} />~${estimatedMinutes} min</span>
-        </div>
+        <h2 class="t-title">${title}</h2>
+        ${finished
+          ? html`<${DoneSummary} session=${finished} />`
+          : html`<div class="row mono t-sub c-subtle" style="gap:16px">
+              <span class="row" style="gap:6px">
+                <${Icon} name="dumbbell" size=${15} />${exerciseCount} ${exerciseCount === 1 ? 'exercise' : 'exercises'}
+              </span>
+              <span class="row" style="gap:6px"><${Icon} name="clock" size=${15} />~${estimatedMinutes(planDay)} min</span>
+            </div>`}
       </div>
-      ${existing
-        ? html`<button class="btn-green pressable" onClick=${() => store.resumeSession(existing)}>
-            <${Icon} name="play" size=${15} />Continue session
+      ${finished
+        ? html`<button class="btn-soft tall" onClick=${() => store.resumeSession(finished)}>
+            <${Icon} name="square-pencil" size=${15} weight=${2} />Edit session
           </button>`
         : html`<button class="btn-primary" onClick=${() => store.startSession(planDay)}>START SESSION</button>`}`;
   }
@@ -104,6 +126,19 @@ function TodaySessionCard() {
     </div>
     ${body}
     ${showPlanPicker && html`<${PlanPickerSheet} onClose=${() => setShowPlanPicker(false)} />`}
+  </div>`;
+}
+
+/// "Done · 9/9 sets · 24 min" — today's workout once it is finished.
+function DoneSummary({ session }) {
+  const done = session.sets.filter(s => s.isCompleted).length;
+  const planned = session.plannedSets ?? done;
+  const minutes = session.startedAt && session.completedAt
+    ? Math.max(1, Math.round((toDate(session.completedAt) - toDate(session.startedAt)) / 60000))
+    : null;
+  return html`<div class="row mono t-sub" style="gap:8px;flex-wrap:wrap">
+    <span class="row c-green" style="gap:6px"><${Icon} name="check-circle-fill" size=${16} />Done</span>
+    <span class="c-subtle">· ${done}/${planned} sets${minutes ? ` · ${minutes} min` : ''}</span>
   </div>`;
 }
 
@@ -189,7 +224,7 @@ function EnergyCheckInSection() {
         </button>`)}
     </div>
     ${active.length > 0 && html`<p class="mono t-caption2 c-subtle" style="line-height:1.45">
-      ${active.map(id => MODIFIERS[id].hint).join(' · ')}
+      ${Object.keys(MODIFIERS).filter(id => active.includes(id)).map(id => MODIFIERS[id].hint).join(' · ')}
     </p>`}
   </div>`;
 }

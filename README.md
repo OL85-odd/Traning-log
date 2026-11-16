@@ -33,6 +33,7 @@ js/core/                Ren logikk — ingen DOM. Kjører og testes i Node
   planResolver.js         Hvilken plandag gjelder en gitt dato
   progression.js          +2,5 % per måned
   progressStats.js        Mål mot faktisk, til grafene
+  units.js                Enheter (kg/lbs, sek/min), tolking av tall, standardmål
   backup.js               .oddform.json — samme format som iOS
   store.js                All tilstand + lagring
 
@@ -75,7 +76,7 @@ funksjon tar tilstand inn og gir et view ut. `useState` er `@State`,
 
 ```sh
 npm start        # http://localhost:5173
-npm test         # 24 tester, ingen avhengigheter
+npm test         # 35 tester, ingen avhengigheter
 ```
 
 `npm start` er bare `python3 -m http.server`. Filene må serveres over http —
@@ -113,47 +114,56 @@ stemme for at Swift skal lese fila, og begge er dekket av tester:
 Web legger til `quickSessions`; iOS-dekoderen hopper over nøkler den ikke
 kjenner. Øvelses-ID-ene er de samme på begge plattformer.
 
-Kompatibiliteten er testet mot Swift-structene slik de står i koden, ikke
-mot en kjørende iOS-build.
-
 ## Bevisste avvik fra iOS-appen
 
 | Web | iOS | Hvorfor |
 |---|---|---|
 | «…»-knapp på hver plan (Edit / Copy / Delete) | Sveip på raden | Sveip er upålitelig i en nettleser |
-| Pro er på fra start; bryter under Settings → Prototype | Pro er av; debug-bryter i utviklerbygg | Ingen StoreKit på web, og backup bør være tilgjengelig |
-| En påbegynt økt overlever at appen lastes på nytt | Økta forsvinner hvis appen lukkes | Nettlesere kaster faner oftere enn iOS kaster apper |
+| Ingen Pro: alt er åpent, også backup og egne øvelser | Backup og egne øvelser krever Pro | Webversjonen er gratisutgaven |
 | Uka starter alltid mandag | Følger telefonens region | Planmodellen teller 1 = mandag |
 | Datoer vises på engelsk | Følger telefonens språk | Resten av appen er på engelsk |
 
-## Funn i iOS-koden
+Web eksporterer alltid `isPro: false`, og iOS beholder sin egen Pro-status ved
+import. En backupfil kan altså ikke brukes til å låse opp Pro.
 
-Dukket opp under portingen. Lest ut av koden, ikke verifisert på telefon.
-De fem første er rettet i webversjonen; resten er gjengitt slik iOS gjør det,
-så du kan vurdere dem som designvalg.
+## Slik oppfører appen seg
 
-**Rettet her**
+Reglene under gjelder begge plattformer. De er grunnen til de fleste
+valgene i `store.js` / `AppData.swift`.
 
-1. **Quick session viser feil innhold.** `startQuickSession` lager en dag
-   med den ene øvelsen, men `ActiveSessionView` slår opp dagens plan på nytt
-   og ignorerer den. På en treningsdag får du hele planen, på en hviledag et
-   tomt skjermbilde med tittelen «Rest».
-2. **Blank økt-tittel på egne planer.** `blocks.first?.blockName ?? …` faller
-   aldri tilbake, fordi navnet er `""` og ikke `nil`.
-3. **Desimalkomma mistes.** `Double("42,5")` er `nil`, så vekt tastet på
-   norsk tastatur lagres ikke i øktloggen (plan-editoren håndterer det riktig).
-4. **Tall tastet etter avhuking lagres ikke.** Et sett logges bare idet du
-   trykker på haken.
-5. **«Go to Settings →»** når ingen plan er valgt, peker på `EmptyView()`.
+**Økta**
 
-**Gjengitt som i iOS**
+- Å huke av et sett betyr «gjorde målet»: tomme felt fylles med planens tall.
+- Alt som tastes lagres med en gang, også uten avhuking.
+- En påbegynt økt overlever at appen lukkes. «Cancel» spør før noe kastes.
+- Én planlagt økt per dag. Å starte den på nytt åpner den samme loggen.
+- En quick session er sin egen logg og teller ikke som sett i dagens plan.
+- «How do you feel?» lagres på dagen uten å late som en økt er startet.
+- Desimalkomma leses (`42,5`). Tall utenfor rimelige grenser markeres røde.
+- Vekt lagres alltid i kg og tid alltid i sekunder; enheten styrer bare
+  visningen (kg/lbs under Settings, sek/min/t per øvelse).
 
-6. «Short on time» sier at planen er kortet ned til tre øvelser, men ingenting
-   kortes ned.
-7. Start av økt i dag lager alltid en ny logg. Tidslinja og ukestripa leser
-   bare dagens første.
-8. Å velge «How do you feel?» lager en tom logg for dagen, og da viser Today
-   «Continue session» selv om ingen økt er startet.
-9. Tidslinja åpner 14 dager frem i tid; i dag ligger 14 rader ned.
-10. Kg-feltet vises for alle øvelser, også planke og løping.
-11. Varighet kan ikke legges til en øvelse i editoren — bare reps og vekt.
+**Historikk**
+
+- En ferdig økt tar med seg et øyeblikksbilde av planen (`plannedSets`,
+  `title`). Å redigere eller bytte plan etterpå endrer ikke fortiden.
+- Planen gjelder fra startdatoen sin. Dager før den er tomme, ikke «hoppet over».
+- Tidslinja åpner på i dag og går tilbake til første logg («Show earlier»).
+- Å velge planen som allerede er aktiv, endrer ingenting. Bare «Start again»
+  på et ferdig program setter ny startdato.
+
+**Progresjon**
+
+- +2,5 % av opprinnelig mål per hele måned. Vekt rundes til nærmeste halve
+  kilo, reps og sekunder til hele tall.
+- Målet regnes for datoen det gjelder. Økta, tidslinja og grafen viser
+  derfor samme tall, og et sett som traff målet tegnes aldri som bom.
+
+## Kjente begrensninger
+
+- Progresjonen følger kalenderen, ikke hva du faktisk klarte.
+- Med få reps skjer økningen sjelden: 8 reps blir 9 først etter tre måneder, 5 reps blir 6 etter fire.
+- Dager før en plan ble startet kan ikke logges i ettertid.
+- Søket i biblioteket er engelsk og tåler ikke skrivefeil.
+- Kompatibiliteten med iOS er testet mot Swift-structene slik de står i
+  koden, ikke mot en kjørende iOS-build.

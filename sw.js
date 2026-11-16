@@ -2,7 +2,7 @@
 // Your training data is NOT in here — it lives in localStorage, which is
 // independent of this cache.
 
-const CACHE = 'odd-form-v1';
+const CACHE = 'odd-form-v2';
 
 // Every file the app is made of. tests/sw.test.js fails if one is missing.
 const SHELL = [
@@ -19,6 +19,7 @@ const SHELL = [
   'js/core/progressStats.js',
   'js/core/progression.js',
   'js/core/store.js',
+  'js/core/units.js',
   'js/ui/common.js',
   'js/ui/icons.js',
   'js/ui/library.js',

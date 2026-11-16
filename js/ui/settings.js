@@ -4,7 +4,7 @@
 import { html, useRef, useState } from '../vendor/preact-htm.js';
 import { BackupError, backupFileName, makeBackup, parseBackup, serializeBackup } from '../core/backup.js';
 import { format } from '../core/dates.js';
-import { Alert, Sheet, Switch, store } from './common.js';
+import { Alert, Sheet, store } from './common.js';
 import { Icon } from './icons.js';
 import { PlanPickerSheet } from './planPicker.js';
 
@@ -34,27 +34,16 @@ export function SettingsView() {
         </div>`}
       </div>
 
-      <div class="list-header">Odd Form Pro</div>
-      <div class="list-group">
-        <div class="list-row" style="flex-direction:column;align-items:flex-start">
-          <span class="t-sub c-subtle">Unlock unlimited history, custom plans, and JSON backup.</span>
-          ${settings.isPro
-            ? html`<span class="row mono t-sub c-green" style="gap:6px"><${Icon} name="check-circle-fill" size=${16} />Pro active</span>`
-            : html`<span class="mono t-sub c-subtle">Not unlocked</span>`}
-        </div>
-      </div>
-
       <div class="list-header">Backup</div>
       <div class="list-group">
-        ${settings.isPro
-          ? html`
-            <button class="list-row" onClick=${() => setSheet('export')}><span>Export backup</span><span class="spacer"></span>${chevron}</button>
-            <button class="list-row" onClick=${() => setSheet('import')}><span>Import backup</span><span class="spacer"></span>${chevron}</button>
-            ${backupAge != null && html`<div class="list-row">
-              <span>Last backup</span><span class="spacer"></span>
-              <span class="list-value">${backupAge === 0 ? 'Today' : `${backupAge}d ago`}</span>
-            </div>`}`
-          : html`<div class="list-row"><span class="t-sub c-subtle">Unlock Odd Form Pro to export and import your data as a backup file.</span></div>`}
+        <button class="list-row" onClick=${() => setSheet('export')}><span>Export backup</span><span class="spacer"></span>${chevron}</button>
+        <button class="list-row" onClick=${() => setSheet('import')}><span>Import backup</span><span class="spacer"></span>${chevron}</button>
+        <div class="list-row">
+          <span>Last backup</span><span class="spacer"></span>
+          <span class="list-value ${backupAge == null || backupAge > 30 ? 'c-sand' : ''}">
+            ${backupAge == null ? 'Never' : backupAge === 0 ? 'Today' : `${backupAge}d ago`}
+          </span>
+        </div>
       </div>
 
       <div class="list-header">General</div>
@@ -69,17 +58,6 @@ export function SettingsView() {
             </select>
           </span>
         </label>
-      </div>
-
-      <div class="list-header">Prototype</div>
-      <div class="list-group">
-        <div class="list-row">
-          <div style="flex:1">
-            <div>Pro unlocked</div>
-            <div class="mono t-caption c-subtle" style="margin-top:2px">Switch off to see the free tier</div>
-          </div>
-          <${Switch} on=${settings.isPro} onChange=${isPro => store.updateSettings({ isPro })} label="Pro unlocked" />
-        </div>
       </div>
 
       <div class="list-header">About</div>

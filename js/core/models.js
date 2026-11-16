@@ -41,19 +41,20 @@ export const MUSCLE_GROUPS = {
   core: 'Core', legs: 'Legs', fullBody: 'Full body',
 };
 
-/// Swift: ExerciseUnit (raw values double as labels)
+/// Swift: ExerciseUnit. These are the stored raw values; what the user reads
+/// and which units go with which field is in units.js.
 export const UNITS = ['Reps', 'Sek', 'Min', 'Timer', 'm', 'km', 'mil'];
 
 /// Swift: DayModifier. `priority` decides which one shows inside a timeline node.
 export const MODIFIERS = {
   shortOnTime: { label: 'Short on time', icon: 'bolt',        color: 'sand',
-                 hint: "Today's plan is shortened to 3 quick exercises." },
+                 hint: 'Logged as short on time.' },
   lowEnergy:   { label: 'Low energy',    icon: 'battery',     color: 'blue',
                  hint: 'Logged as low energy. Keep it light.' },
   fasting:     { label: 'Fasting',       icon: 'leaf',        color: 'green',
-                 hint: 'Fasting today — suggested: walk or light stretch.' },
+                 hint: 'Logged as fasting.' },
   sick:        { label: 'Sick',          icon: 'thermometer', color: 'red',
-                 hint: 'Sick day. Rest up.' },
+                 hint: 'Logged as sick. Rest up.' },
 };
 export const MODIFIER_PRIORITY = ['sick', 'fasting', 'lowEnergy', 'shortOnTime'];
 
@@ -104,11 +105,17 @@ export function newPlan(fields) {
 }
 
 /// Swift: SessionLog. Dates are ISO strings.
+///
+/// `planDayTemplateID` is null for a quick session — one that is not the
+/// day's planned workout. `plannedSets` and `title` are filled in when the
+/// session is finished: a snapshot of what the plan asked for that day, so
+/// history stays true after the plan is edited or swapped for another.
 export function newSession(fields) {
   return {
     id: uuid(), date: null, planTemplateID: null, planDayTemplateID: null,
     dayType: 'strength', startedAt: null, completedAt: null, energyLevel: null,
     sets: [], notes: '', didBackup: false, feelModifiers: [],
+    plannedSets: null, title: null,
     ...fields,
   };
 }

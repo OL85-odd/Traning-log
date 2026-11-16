@@ -14,7 +14,7 @@
 :root {
   --bg: #0a0a0a;
   --text: #f5f2ee;
-  --subtle: rgb(245 242 238 / 0.45);
+  --subtle: rgb(245 242 238 / 0.6);    /* secondary text — 6.9:1 on the background */
   --surface: rgb(255 255 255 / 0.06);
   --border: rgb(255 255 255 / 0.10);
 
@@ -95,7 +95,7 @@ h1, h2, h3, p { margin: 0; }
 .t-sub { font-size: 15px; }
 .t-caption { font-size: 12px; }
 .t-caption2 { font-size: 11px; }
-.t-micro { font-size: 9px; }
+.t-micro { font-size: 10px; }
 .medium { font-weight: 500; }  .semibold { font-weight: 600; }  .bold { font-weight: 700; }
 
 /* "TODAY", "QUICK SESSIONS" — the small tracked section captions */
@@ -171,6 +171,9 @@ h1, h2, h3, p { margin: 0; }
   font: 500 13px var(--font-mono);
 }
 .btn-soft.tall { padding: 13px; border-radius: var(--radius-control); font-size: 15px; font-weight: 400; gap: 8px; }
+.btn-soft.icon { width: 44px; flex: none; }
+/* A quiet text button with an optional leading icon. */
+.btn-plain { display: inline-flex; align-items: center; gap: 6px; }
 .btn-soft:active, .btn-plain:active, .pressable:active { opacity: 0.6; }
 
 .btn-green {
@@ -339,7 +342,7 @@ button.list-row:active { background: rgb(255 255 255 / 0.05); }
 .alert-buttons { display: flex; border-top: 1px solid var(--border); }
 .alert-buttons button { flex: 1; padding: 11px 8px; font-size: 17px; color: var(--accent); text-align: center; }
 .alert-buttons button + button { border-left: 1px solid var(--border); }
-.alert-buttons button.cancel { font-weight: 600; }
+.alert-buttons button.cancel, .alert-buttons button.primary { font-weight: 600; }
 .alert-buttons button.destructive { color: var(--red); }
 .alert-buttons button:active { background: rgb(255 255 255 / 0.08); }
 
@@ -413,8 +416,22 @@ button.list-row:active { background: rgb(255 255 255 / 0.05); }
   width: 64px; padding: 6px; text-align: center; font-size: 16px;
   background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
 }
-.set-check { padding: 6px; margin: -6px; color: var(--subtle); }
+.set-field input.invalid, .num-field.invalid { border-color: var(--red); color: var(--red); }
+/* The tick is the main control on this screen: a full 44 pt target. */
+.set-check { display: grid; place-items: center; width: 44px; height: 44px; margin: -6px -8px -6px 0; color: var(--subtle); }
 .set-check.done { color: var(--green); }
+
+/* Rest countdown, pinned to the bottom of the session */
+.rest-bar {
+  position: absolute; left: 0; right: 0; bottom: 0; overflow: hidden;
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px var(--gutter) calc(14px + env(safe-area-inset-bottom));
+  background: rgb(22 22 22 / 0.92);
+  -webkit-backdrop-filter: blur(22px); backdrop-filter: blur(22px);
+  border-top: 1px solid var(--border);
+}
+.rest-bar > * { position: relative; }
+.rest-fill { position: absolute; left: 0; top: 0; height: 2px; background: var(--accent); transition: width 0.25s linear; }
 
 /* Plan — header badges */
 .mode-badge {
@@ -442,6 +459,7 @@ button.list-row:active { background: rgb(255 255 255 / 0.05); }
   padding: 14px 0 10px; color: var(--subtle); font: 9px var(--font-mono); letter-spacing: 1px;
 }
 .chart-box { padding: 12px; }
+.chart-scale { position: absolute; left: 0; font: 10px var(--font-mono); color: var(--subtle); pointer-events: none; }
 .legend-line { display: inline-block; width: 12px; height: 0; border-top: 1.5px solid rgb(245 242 238 / 0.85); }
 .legend-line.dashed { border-top: 1.5px dashed var(--accent); }
 
@@ -476,19 +494,22 @@ button.list-row:active { background: rgb(255 255 255 / 0.05); }
   display: flex; align-items: center; height: 44px;
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-control);
 }
-.stepper button { display: grid; place-items: center; width: 40px; height: 44px; color: var(--accent); }
-.stepper span { min-width: 26px; text-align: center; font: 600 15px var(--font-mono); }
+.stepper button { flex: 1; display: grid; place-items: center; min-width: 26px; height: 44px; color: var(--accent); }
+.stepper span { min-width: 20px; text-align: center; font: 600 15px var(--font-mono); }
 .num-field {
-  width: 64px; height: 44px; text-align: center; font: 600 16px var(--font-mono);
+  width: 100%; height: 44px; text-align: center; font: 600 16px var(--font-mono);
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-control);
 }
 .ghost-btn {
-  height: 44px; padding: 0 10px; font: 11px var(--font-mono); color: var(--subtle);
+  width: 100%; height: 44px; padding: 0 4px; font: 11px var(--font-mono); color: var(--subtle);
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-control);
 }
-.unit-col { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.unit-head { display: flex; align-items: center; gap: 4px; height: 14px; font: 10px var(--font-mono); color: var(--subtle); }
-.editor-row { display: flex; gap: 8px; flex-wrap: wrap; padding: 0 var(--gutter) 12px; }
+.unit-col { display: flex; flex-direction: column; align-items: stretch; gap: 4px; min-width: 0; }
+.unit-col .stepper { width: 100%; }
+.unit-head { display: flex; align-items: center; justify-content: center; gap: 4px; height: 22px; font: 11px var(--font-mono); color: var(--subtle); }
+.unit-remove { display: grid; place-items: center; width: 22px; height: 22px; margin: 0 -4px; color: rgb(245 242 238 / 0.35); }
+/* Sets · reps · time · weight: four equal columns that always fit one row. */
+.editor-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; padding: 0 var(--gutter) 12px; }
 
 /* Create plan */
 .type-card { display: flex; align-items: center; gap: 14px; width: 100%; padding: 16px; text-align: left; }
@@ -527,3 +548,7 @@ button.list-row:active { background: rgb(255 255 255 / 0.05); }
 .select-wrap { position: relative; display: flex; align-items: center; gap: 4px; color: var(--accent); }
 .select-wrap select { position: absolute; inset: 0; opacity: 0; width: 100%; font-size: 16px; }
 .hero-sheet { display: flex; flex-direction: column; align-items: center; gap: 24px; padding: 32px; text-align: center; }
+
+/* Timeline — the spot the Plan tab opens on */
+/* (clear of the progress drawer, and with a sliver of tomorrow showing above) */
+.tl-today-anchor { scroll-margin-top: 62px; }

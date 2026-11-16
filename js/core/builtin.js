@@ -727,14 +727,15 @@ const RAW_EXERCISES = [
 export const BUILT_IN_EXERCISES = RAW_EXERCISES.map(e => newExercise(e));
 
 /// Built-in exercise name -> icon asset (img/exercises/<name>.png).
+// An exercise without a drawing of its own (Running, Push-up, the stretches)
+// has no entry and shows its category glyph — never another exercise's picture.
 export const ICON_MAP = {
   "Squat": "exercise-squat",
   "Deadlift": "exercise-dumbbell-romanian-deadlift",
   "Bench Press": "exercise-dumbbell-floor-press",
-  "Pull-up": "exercise-dumbbell-rows",
+  "Pull-up": "exercise-pull-up",
   "Overhead Press": "exercise-dumbbell-overhead-press",
   "Plank": "exercise-plank",
-  "Push-up": "exercise-burpees",
   "Lunge": "exercise-lunges",
   "Glute Bridge": "exercise-glute-bridge",
   "Dumbbell Rows": "exercise-dumbbell-rows",
@@ -756,11 +757,8 @@ export const ICON_MAP = {
   "Jumping Jacks": "exercise-jumping-jacks",
   "Plank Jacks": "exercise-plank-jacks",
   "Inchworms": "exercise-inchworms",
-  "Hip Flexor Stretch": "exercise-bird-dog",
-  "Cat-Cow": "exercise-superman",
-  "Running": "exercise-jumping-jacks",
-  "Cycling": "exercise-calf-raises",
-  "Jump Rope": "exercise-plank-jacks"
+  "Cycling": "exercise-spinning",
+  "Jump Rope": "exercise-skipping-rope"
 };
 
 /// Every icon a custom exercise can pick. Swift: IconPickerSheet.allIcons
@@ -793,6 +791,7 @@ const slot = (name, targets) => newSlot({ exerciseID: byName(name).id, ...target
 // Plan/day/slot IDs are generated fresh, exactly as on iOS — the store saves
 // them on first launch so they stay stable from then on.
 
+/// Bodyweight only: nothing here needs a bar, a bench or a gym.
 function homeMaintenance() {
   return newPlan({
     name: 'Home Maintenance',
@@ -800,23 +799,23 @@ function homeMaintenance() {
     days: [
       newPlanDay({ dayOfWeek: 1, dayType: 'strength', blocks: [
         newBlock({ blockName: 'Full Body A', exercises: [
-          slot('Squat', { targetSets: 3, targetReps: 8 }),
-          slot('Bench Press', { targetSets: 3, targetReps: 8 }),
+          slot('Squat', { targetSets: 3, targetReps: 10 }),
+          slot('Push-up', { targetSets: 3, targetReps: 8 }),
           slot('Plank', { targetSets: 3, targetDurationSeconds: 45 }),
         ] }),
       ] }),
       newPlanDay({ dayOfWeek: 2, dayType: 'rest' }),
       newPlanDay({ dayOfWeek: 3, dayType: 'cardio', blocks: [
         newBlock({ blockName: 'Cardio', exercises: [
-          slot('Running', { targetDurationSeconds: 1800 }),
+          slot('Running', { targetDurationSeconds: 1800, unit2: 'Min' }),
         ] }),
       ] }),
       newPlanDay({ dayOfWeek: 4, dayType: 'rest' }),
       newPlanDay({ dayOfWeek: 5, dayType: 'strength', blocks: [
         newBlock({ blockName: 'Full Body B', exercises: [
-          slot('Deadlift', { targetSets: 3, targetReps: 6 }),
-          slot('Pull-up', { targetSets: 3, targetReps: 6 }),
-          slot('Plank', { targetSets: 3, targetDurationSeconds: 45 }),
+          slot('Lunge', { targetSets: 3, targetReps: 10 }),
+          slot('Glute Bridge', { targetSets: 3, targetReps: 12 }),
+          slot('Superman', { targetSets: 3, targetReps: 10 }),
         ] }),
       ] }),
       newPlanDay({ dayOfWeek: 6, dayType: 'rest' }),
