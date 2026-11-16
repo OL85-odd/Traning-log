@@ -59,7 +59,10 @@ export function ExercisePickerSheet({ onSelect, onClose }) {
 /// mix: 3 × 10 reps at 20 kg, 3 × 45 sec, or simply 30 min.
 function SetsRepsEditor({ slot, onChange }) {
   const weightUnit = store.state.settings.preferredUnit;
-  const time = timeUnit(slot);
+  // The unit the time is typed in. Decided when the row opens and changed
+  // only by the unit picker: if it followed the value, "600" in a seconds
+  // field would turn into 600 minutes halfway through typing.
+  const [time, setTime] = useState(() => timeUnit(slot));
 
   // What is being typed; the slot only takes a value once it parses.
   const [text, setText] = useState(() => ({
@@ -95,6 +98,7 @@ function SetsRepsEditor({ slot, onChange }) {
   // "45 sec" switched to minutes is 45 min.
   const pickUnit = unit => {
     if (unitPicker === 'unit2') {
+      setTime(unit);
       const shown = parseDecimal(text.time);
       set({ unit2: unit, ...(shown != null && { targetDurationSeconds: Math.min(LIMITS.seconds, unitToSeconds(shown, unit)) }) });
     } else {
@@ -136,7 +140,7 @@ function SetsRepsEditor({ slot, onChange }) {
             }
           })}
         </div>`
-      : ghost('Time', () => { type('time', '30'); set({ targetDurationSeconds: 30, unit2: 'Sek' }); })}
+      : ghost('Time', () => { setTime('Sek'); type('time', '30'); set({ targetDurationSeconds: 30, unit2: 'Sek' }); })}
 
     ${slot.targetWeightKg != null
       ? html`<div class="unit-col">

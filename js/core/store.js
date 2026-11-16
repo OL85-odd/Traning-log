@@ -37,7 +37,11 @@ function dayFromLog(session) {
     slot.targetSets = Math.max(slot.targetSets, set.setNumber);
     if (set.repsCompleted != null) slot.targetReps ??= set.repsCompleted;
     if (set.weightKg != null) slot.targetWeightKg ??= set.weightKg;
-    if (set.durationSeconds != null) slot.targetDurationSeconds ??= set.durationSeconds;
+    if (set.durationSeconds != null && slot.targetDurationSeconds == null) {
+      slot.targetDurationSeconds = set.durationSeconds;
+      // Whole minutes read as minutes: a "5 min" quick session, not "300 sec".
+      if (set.durationSeconds >= 120 && set.durationSeconds % 60 === 0) slot.unit2 = 'Min';
+    }
     slots.set(set.exerciseID, slot);
   }
   return newPlanDay({ dayType: session.dayType, blocks: [newBlock({ exercises: [...slots.values()] })] });
@@ -370,14 +374,14 @@ export function createStore({ storage, now = () => new Date() } = {}) {
     /// when its last modifier is switched off).
     toggleModifier(modifier) {
       const today = startOfDay(now());
-      const holder = store.sessionsOn(today)[0];
-      if (holder) {
-        holder.feelModifiers = holder.feelModifiers.includes(modifier)
-          ? holder.feelModifiers.filter(m => m !== modifier)
-          : [...holder.feelModifiers, modifier];
-        if (isEmptyHolder(holder) && holder.feelModifiers.length === 0) {
-          state.sessions = state.sessions.filter(s => s.id !== holder.id);
-        }
+      const logs = store.sessionsOn(today);
+      if (store.todayModifiers.includes(modifier)) {
+        // Switch it off wherever it sits, and drop a log left with nothing in it.
+        for (const log of logs) log.feelModifiers = log.feelModifiers.filter(m => m !== modifier);
+        const emptied = new Set(logs.filter(l => isEmptyHolder(l) && l.feelModifiers.length === 0).map(l => l.id));
+        state.sessions = state.sessions.filter(s => !emptied.has(s.id));
+      } else if (logs[0]) {
+        logs[0].feelModifiers = [...logs[0].feelModifiers, modifier];
       } else {
         const planDay = store.todayPlanDay;
         state.sessions.push(newSession({
@@ -401,10 +405,18 @@ export function createStore({ storage, now = () => new Date() } = {}) {
       const existing = store.planSessionOn(date);
       state.activeSessionDay = null;
       if (existing) {
-        state.activeSession = clone(existing);
-        if (isToday && !existing.completedAt && !existing.startedAt) {
-          state.activeSession.startedAt = toISO(now());
+        const session = clone(existing);
+        if (!existing.completedAt) {
+          // A log that so far only held feel modifiers becomes this plan
+          // day's session, whatever the plan was when it was made.
+          if (planDay) {
+            session.planTemplateID = store.activePlan?.id ?? null;
+            session.planDayTemplateID = planDay.id;
+            session.dayType = planDay.dayType;
+          }
+          if (isToday && !existing.startedAt) session.startedAt = toISO(now());
         }
+        state.activeSession = session;
       } else {
         state.activeSession = newSession({
           date: toISO(startOfDay(date)),
@@ -443,6 +455,12 @@ export function createStore({ storage, now = () => new Date() } = {}) {
     resumeSession(session) {
       state.activeSession = clone(session);
       state.activeSessionDay = null;
+      // A quick session, or a log from a plan that has since changed, is
+      // shown as a day rebuilt from what was logged. Build it once and keep
+      // it: rebuilding on every redraw would give its rows new identities
+      // each time, dropping the keyboard after every keystroke.
+      const day = store.planDayForSession(state.activeSession);
+      if (isQuickSession(session) || day?.id !== session.planDayTemplateID) state.activeSessionDay = day;
       commit();
     },
 
@@ -467,7 +485,7 @@ export function createStore({ storage, now = () => new Date() } = {}) {
       const isOwnDay = isQuickSession(session) || planDay?.id === session.planDayTemplateID;
 
       // Editing a finished session keeps the time it was first finished.
-      session.completedAt ??= isSameDay(session.date, now()) ? toISO(now()) : session.date;
+      session.completedAt ??= isSameDay(session.date, now()) ? toISO(now()) : (session.startedAt ?? session.date);
       // Snapshot what the plan asked for, so later plan edits leave this log alone.
       if (isOwnDay || session.plannedSets == null) {
         session.plannedSets = plannedSetCount(planDay, store.hasExercise);

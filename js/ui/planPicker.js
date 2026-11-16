@@ -137,15 +137,25 @@ export function CreatePlanSheet({ editing = null, onClose, onCreated }) {
       const free = days.findIndex(d => d.dayType === 'rest');
       if (free !== -1) setDay(free, { ...days[free], dayType: 'strength' });
     } else {
-      const next = Math.max(-1, ...days.map(d => d.dayIndex ?? -1)) + 1;
-      setDays([...days, newPlanDay({ dayIndex: next, dayType: 'strength' })]);
+      // Inside the program's own weeks, not as "Day 29" after them: the first
+      // rest day with a rest day before it (so days alternate), else the
+      // first rest day at all. Only a full program grows by one more day.
+      const order = days.map((_, i) => i).sort((a, b) => (days[a].dayIndex ?? 0) - (days[b].dayIndex ?? 0));
+      const isRest = position => days[order[position]].dayType === 'rest';
+      const rests = order.map((_, position) => position).filter(isRest);
+      const position = rests.find(p => p === 0 || isRest(p - 1)) ?? rests[0];
+      if (position != null) {
+        setDay(order[position], { ...days[order[position]], dayType: 'strength' });
+      } else {
+        const next = Math.max(-1, ...days.map(d => d.dayIndex ?? -1)) + 1;
+        setDays([...days, newPlanDay({ dayIndex: next, dayType: 'strength' })]);
+      }
     }
   };
 
-  const removeTrainingDay = index => {
-    if (planMode === 'weeklyCycle') setDay(index, { ...days[index], dayType: 'rest', blocks: [] });
-    else setDays(days.filter((_, i) => i !== index));
-  };
+  // Back to a rest day in both modes. (Removing the entry from a program
+  // would leave a hole in its days — a day the app has no answer for.)
+  const removeTrainingDay = index => setDay(index, { ...days[index], dayType: 'rest', blocks: [] });
 
   const save = () => {
     if (!isValid) return;

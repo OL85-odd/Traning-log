@@ -405,9 +405,8 @@ function PastSession({ log, planDay }) {
   const weightUnit = store.state.settings.preferredUnit;
   const completed = log.sets.filter(s => s.isCompleted);
   const percent = completionPercent(log, planDay, store.hasExercise);
-  const duration = log.startedAt && log.completedAt
-    ? format.clock((toDate(log.completedAt) - toDate(log.startedAt)) / 1000)
-    : null;
+  const seconds = log.startedAt && log.completedAt ? (toDate(log.completedAt) - toDate(log.startedAt)) / 1000 : 0;
+  const duration = seconds >= 1 ? format.clock(seconds) : null;
 
   // Completed sets grouped by exercise, in the order they were logged.
   const groups = new Map();

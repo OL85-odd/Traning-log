@@ -76,7 +76,7 @@ funksjon tar tilstand inn og gir et view ut. `useState` er `@State`,
 
 ```sh
 npm start        # http://localhost:5173
-npm test         # 35 tester, ingen avhengigheter
+npm test         # 37 tester, ingen avhengigheter
 ```
 
 `npm start` er bare `python3 -m http.server`. Filene må serveres over http —

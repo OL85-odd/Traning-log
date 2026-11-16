@@ -68,7 +68,7 @@ function TodaySessionCard() {
       <div class="t-sub c-subtle">Choose a plan to get started.</div>
       <button class="link" onClick=${() => setShowPlanPicker(true)}>Choose plan →</button>
     </div>`;
-  } else if (!planDay) {
+  } else if (!planDay && program?.finished) {
     // A finite program has run past its last day.
     body = html`<div class="col" style="gap:12px">
       <div class="row" style="gap:10px">
@@ -83,7 +83,8 @@ function TodaySessionCard() {
       <button class="btn-primary" onClick=${() => store.setActivePlan(plan, { restart: true })}>START AGAIN</button>
       <button class="btn-soft tall" onClick=${() => setShowPlanPicker(true)}>Choose another plan</button>
     </div>`;
-  } else if (planDay.dayType === 'rest') {
+  } else if (!planDay || planDay.dayType === 'rest') {
+    // A rest day — or a day the plan has nothing for.
     body = html`<div class="row" style="gap:10px">
       <${Icon} name="moon" size=${20} class="c-subtle" />
       <div>

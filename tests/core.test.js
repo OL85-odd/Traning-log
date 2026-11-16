@@ -344,10 +344,17 @@ test('a quick session is its own log, apart from the planned workout', () => {
   assert.equal(monday.completionPercent, 0);
   assert.equal(monday.hasLog, true);
 
-  // Reopened later, it shows what was logged — not Monday's plan.
+  // Reopened later, it shows what was logged — not Monday's plan — in minutes.
   store.resumeSession(store.state.sessions[0]);
   const reopened = store.planDayForSession(store.state.activeSession);
   assert.deepEqual(reopened.blocks[0].exercises.map(s => s.exerciseID), [squat.id]);
+  assert.equal(timeUnit(reopened.blocks[0].exercises[0]), 'Min');
+  // The rebuilt day is the same object on every redraw (its rows keep their
+  // identity while typing), and a cleared field does not take its row away.
+  store.logSet(newSetLog({ exerciseID: squat.id, setNumber: 1 }));
+  const afterTyping = store.planDayForSession(store.state.activeSession);
+  assert.equal(afterTyping.blocks[0].exercises[0].id, reopened.blocks[0].exercises[0].id);
+  assert.equal(afterTyping.blocks[0].exercises[0].targetDurationSeconds, 300);
   store.cancelSession();
 
   // On a rest day, a quick session is what the day shows.
@@ -394,6 +401,37 @@ test('feel modifiers are held for today without pretending a session was started
   assert.equal(store.state.sessions.length, 2);
   store.toggleModifier('lowEnergy');
   assert.equal(store.state.sessions.length, 1);
+});
+
+test('a modifier set before a plan switch still becomes that day\'s session', () => {
+  const { store } = storeAt(local(2026, 11, 16, 9)); // Monday
+  store.toggleModifier('lowEnergy');                  // held against Home Maintenance's Monday
+  store.setActivePlan(store.state.plans[1]);          // Beginner Strength starts today
+  const planDay = store.todayPlanDay;
+  const session = store.startSession(planDay);
+  assert.equal(session.planDayTemplateID, planDay.id);
+  assert.equal(session.planTemplateID, store.activePlan.id);
+  store.logSet(newSetLog({ exerciseID: squat.id, setNumber: 1, repsCompleted: 5, isCompleted: true }));
+  // Still the plan's own day after the first set — not a day rebuilt from the log.
+  assert.equal(store.planDayForSession(store.state.activeSession).id, planDay.id);
+  store.completeSession();
+  assert.deepEqual(store.todaySession.feelModifiers, ['lowEnergy']);
+
+  // A modifier can be switched off whichever of the day's logs holds it.
+  store.startQuickSession(store.state.quickSessions[0]);
+  store.completeSession();
+  store.toggleModifier('lowEnergy');
+  assert.deepEqual(store.todayModifiers, []);
+});
+
+test('a session finished on a later day does not end before it started', () => {
+  const { store, clock } = storeAt(local(2026, 11, 16, 21));
+  store.startSession(store.todayPlanDay);
+  store.logSet(newSetLog({ exerciseID: squat.id, setNumber: 1, repsCompleted: 10, isCompleted: true }));
+  clock.now = local(2026, 11, 17, 7); // the app was left open overnight
+  store.completeSession();
+  const saved = store.state.sessions[0];
+  assert.ok(new Date(saved.completedAt) >= new Date(saved.startedAt));
 });
 
 test('choosing the active plan again keeps its start date; restarting resets it', () => {
