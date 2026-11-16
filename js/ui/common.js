@@ -3,9 +3,10 @@
 // Swift: OddForm/Shared/**
 
 import { html, render, useEffect, useLayoutEffect, useReducer, useRef } from '../vendor/preact-htm.js';
-import { iconAssetName } from '../core/builtin.js';
+import { iconAssetName, isFigureIcon } from '../core/builtin.js';
 import { CATEGORIES, DAY_TYPES, MODIFIERS } from '../core/models.js';
 import { createStore } from '../core/store.js';
+import { UNIT_LABELS, countUnit, formatWeight, secondsToUnit, timeUnit, trimNumber } from '../core/units.js';
 import { Icon } from './icons.js';
 
 // MARK: - Store
@@ -36,7 +37,7 @@ export function useStore() {
 /// Renders its children into #modals at the top of the page instead of where
 /// it sits in the tree. Every overlay goes through here, so a sheet opened
 /// from inside another sheet is still a plain top-level layer.
-function Portal({ children }) {
+export function Portal({ children }) {
   const host = useRef(null);
   if (!host.current) host.current = document.createElement('div');
 
@@ -129,16 +130,40 @@ export function ActionSheet({ title, options, onCancel }) {
 
 // MARK: - Small shared views
 
-/// The exercise's picture in a rounded tile; falls back to its category glyph.
-/// `box` is the tile size and `img` the picture size, in points as on iOS.
-export function ExerciseIcon({ exercise, box = 44, img = 32, radius = 10, variant = '' }) {
+/// The picture of an exercise. A figure file holds the body and, beside it,
+/// the muscles that do the work, both as masks (see tools/make-icons.py);
+/// the two halves are laid on top of each other here, the muscles in red.
+/// An older pictogram is one mask, drawn in the current text colour.
+/// Returns null when the exercise has no picture.
+export function ExerciseFigure({ exercise, size }) {
   const asset = iconAssetName(exercise);
+  if (!asset) return null;
+  // The file is set here, not through a CSS variable: a url() inside a
+  // variable is resolved against the stylesheet, not the page.
+  const file = `-webkit-mask-image:url(img/exercises/${asset}.png);mask-image:url(img/exercises/${asset}.png)`;
+  if (!isFigureIcon(asset)) {
+    return html`<span class="ex-glyph" style="width:${size}px;height:${size}px;${file}" aria-hidden="true"></span>`;
+  }
+  return html`<span class="ex-figure" style="width:${size}px;height:${size}px" aria-hidden="true">
+    <i class="body" style=${file}></i><i class="muscle" style=${file}></i>
+  </span>`;
+}
+
+/// The exercise's picture in a rounded tile; falls back to the category
+/// glyph in the category's colour. `box` is the tile size, in points as on
+/// iOS; the picture nearly fills it (`img` is the size of the fallback
+/// glyph's frame). With `onClick` the tile is a button.
+export function ExerciseIcon({ exercise, box = 44, img = 32, radius = 10, variant = '', onClick, label }) {
   const category = CATEGORIES[exercise?.category] ?? CATEGORIES.strength;
-  return html`<div class="ex-icon ${variant}" style="width:${box}px;height:${box}px;border-radius:${radius}px">
-    ${asset
-      ? html`<img src="img/exercises/${asset}.png" width=${img} height=${img} alt="" />`
-      : html`<${Icon} name=${category.icon} size=${Math.round(img * 0.62)} class="c-${category.color}" />`}
-  </div>`;
+  const style = `width:${box}px;height:${box}px;border-radius:${radius}px`;
+  const asset = iconAssetName(exercise);
+  // A figure is finer than a pictogram and gets nearly the whole tile.
+  const picture = asset
+    ? html`<${ExerciseFigure} exercise=${exercise} size=${isFigureIcon(asset) ? Math.max(img, box - 6) : img} />`
+    : html`<${Icon} name=${category.icon} size=${Math.round(img * 0.62)} />`;
+  return onClick
+    ? html`<button class="ex-icon c-${category.color} ${variant}" style=${style} aria-label=${label} onClick=${onClick}>${picture}</button>`
+    : html`<div class="ex-icon c-${category.color} ${variant}" style=${style}>${picture}</div>`;
 }
 
 /// Glyph + day type name in the type's colour. Swift: DayTypeLabel
@@ -151,6 +176,22 @@ export function DayTypeLabel({ dayType }) {
 
 export function Chip({ label, selected, onClick, large }) {
   return html`<button class="chip ${selected ? 'selected' : ''} ${large ? 'large' : ''}" onClick=${onClick}>${label}</button>`;
+}
+
+/// A number with − and + on either side; the number itself can be typed.
+export function NumberStepper({ label, value, min = 0, max = 999, step = 1, onChange }) {
+  const clamp = n => Math.max(min, Math.min(max, n));
+  return html`<label class="col" style="gap:6px;flex:1;min-width:0">
+    <span class="label">${label}</span>
+    <div class="stepper wide">
+      <button aria-label="Less" onClick=${e => { e.preventDefault(); onChange(clamp(value - step)); }}>
+        <${Icon} name="minus" size=${15} weight=${2.2} /></button>
+      <input inputmode="numeric" value=${value} aria-label=${label}
+        onInput=${e => { if (/^\d+$/.test(e.target.value.trim())) onChange(clamp(Number(e.target.value))); }} />
+      <button aria-label="More" onClick=${e => { e.preventDefault(); onChange(clamp(value + step)); }}>
+        <${Icon} name="plus" size=${15} weight=${2.2} /></button>
+    </div>
+  </label>`;
 }
 
 export function Switch({ on, onChange, label }) {
@@ -188,18 +229,48 @@ export function ModifierBadges({ modifiers }) {
   </div>`;
 }
 
-/// "3 × 8 Reps", "3 sets", "30m", "1m30s". Swift: DayDetailPanel.slotDescription
-export function slotDescription(slot) {
-  if (slot.targetSets != null && slot.targetReps != null) return `${slot.targetSets} × ${slot.targetReps} ${slot.unit1}`;
-  if (slot.targetSets != null) return `${slot.targetSets} sets`;
-  if (slot.targetDurationSeconds != null) {
-    const d = slot.targetDurationSeconds;
-    return `${Math.floor(d / 60)}m${d % 60 > 0 ? `${d % 60}s` : ''}`;
+const allEqual = values => values.every(v => v === values[0]);
+const times = (values, label) =>
+  `${values.length > 1 && allEqual(values) ? `${values.length} × ${values[0]}` : values.join(' / ')} ${label}`;
+
+/// What a slot asks for: "3 × 8 reps · 20 kg", "3 × 45 sec", "30 min", "3 sets".
+/// Swift: DayDetailPanel.slotDescription
+export function slotDescription(slot, weightUnit = 'kg') {
+  const parts = [];
+  const time = timeUnit(slot);
+  const duration = slot.targetDurationSeconds != null
+    ? `${trimNumber(secondsToUnit(slot.targetDurationSeconds, time))} ${UNIT_LABELS[time]}`
+    : null;
+  const sets = slot.targetSets;
+
+  if (slot.targetReps != null) {
+    const reps = `${slot.targetReps} ${UNIT_LABELS[countUnit(slot)]}`;
+    parts.push(sets != null ? `${sets} × ${reps}` : reps);
+    if (duration) parts.push(duration);
+  } else if (duration) {
+    parts.push(sets != null && sets > 1 ? `${sets} × ${duration}` : duration);
+  } else if (sets != null) {
+    parts.push(`${sets} ${sets === 1 ? 'set' : 'sets'}`);
   }
-  return '—';
+  if (slot.targetWeightKg != null && slot.targetWeightKg > 0) {
+    parts.push(`${formatWeight(slot.targetWeightKg, weightUnit)} ${weightUnit}`);
+  }
+  return parts.join(' · ') || '—';
 }
 
-/// 20 -> "20.0", 42.5 -> "42.5"
-export function oneDecimal(value) {
-  return Number(value).toFixed(1);
+/// What was actually done in `sets` of one exercise: "3 × 8 reps · 20 kg",
+/// "8 / 8 / 6 reps · 22.5 kg", "2 × 45 sec". The weight is the heaviest set.
+export function describeSets(sets, slot, weightUnit = 'kg') {
+  const sorted = [...sets].sort((a, b) => a.setNumber - b.setNumber);
+  const parts = [];
+  const reps = sorted.map(s => s.repsCompleted).filter(v => v != null);
+  if (reps.length) parts.push(times(reps, UNIT_LABELS[countUnit(slot)]));
+  const seconds = sorted.map(s => s.durationSeconds).filter(v => v != null);
+  if (seconds.length) {
+    const time = timeUnit(slot);
+    parts.push(times(seconds.map(v => trimNumber(secondsToUnit(v, time))), UNIT_LABELS[time]));
+  }
+  const weights = sorted.map(s => s.weightKg).filter(v => v != null && v > 0);
+  if (weights.length) parts.push(`${formatWeight(Math.max(...weights), weightUnit)} ${weightUnit}`);
+  return parts.join(' · ') || `${sorted.length} ${sorted.length === 1 ? 'set' : 'sets'}`;
 }

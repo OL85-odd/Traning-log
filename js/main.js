@@ -5,6 +5,7 @@ import { html, render, useEffect, useReducer, useState } from './vendor/preact-h
 import { useStore } from './ui/common.js';
 import { Icon } from './ui/icons.js';
 import { LibraryView } from './ui/library.js';
+import { Onboarding } from './ui/onboarding.js';
 import { PlanView } from './ui/plan.js';
 import { ActiveSessionView } from './ui/session.js';
 import { SettingsView } from './ui/settings.js';
@@ -30,6 +31,17 @@ function App() {
     return () => document.removeEventListener('visibilitychange', onVisible);
   }, []);
 
+  // Settings → Appearance: 'dark' and 'light' are set on <html>; 'system'
+  // sets nothing and lets the stylesheet follow the device.
+  const theme = store.state.settings.theme ?? 'system';
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === 'system') delete root.dataset.theme; else root.dataset.theme = theme;
+    // The browser chrome (status bar, address bar) takes the page background.
+    const background = getComputedStyle(root).getPropertyValue('--bg').trim();
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', background);
+  }, [theme]);
+
   const View = TABS.find(t => t.id === tab).view;
 
   return html`
@@ -41,7 +53,8 @@ function App() {
           <${Icon} name=${t.icon} size=${24} weight=${1.6} />${t.label}
         </button>`)}
     </nav>
-    ${store.state.activeSession && html`<${ActiveSessionView} key=${store.state.activeSession.id} />`}`;
+    ${store.state.activeSession && html`<${ActiveSessionView} key=${store.state.activeSession.id} />`}
+    ${!store.state.settings.onboardingCompleted && html`<${Onboarding} />`}`;
 }
 
 render(html`<${App} />`, document.getElementById('app'));

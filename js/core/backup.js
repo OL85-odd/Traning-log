@@ -24,7 +24,9 @@ export function makeBackup(state, now = new Date()) {
   return {
     version: BACKUP_VERSION,
     exportedAt: toISO(now),
-    settings: state.settings,
+    // The web app has no paid tier, and a backup must never be a way to
+    // switch one on in the iPhone app.
+    settings: { ...state.settings, isPro: false },
     exercises: state.exercises,
     plans: state.plans,
     sessions: state.sessions,

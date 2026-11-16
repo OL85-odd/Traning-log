@@ -2,32 +2,28 @@
 // full month since the plan started (linear, not compounded). Weight is scaled
 // when a slot has one; otherwise reps, otherwise duration.
 // Swift: OddForm/Services/ProgressionCalculator.swift
+//
+// Every function takes the date it is asked about. The target shown for a day
+// — in the session, in the timeline and on the chart — is always the same
+// number, computed for that day.
 
-import { daysBetween, monthsBetween, startOfDay } from './dates.js';
+import { monthsBetween } from './dates.js';
 
 export const MONTHLY_INCREASE = 0.025;
 
-export function monthsElapsed(startDate, now = new Date()) {
-  return monthsBetween(startDate, now);
+export function monthsElapsed(startDate, at = new Date()) {
+  return monthsBetween(startDate, at);
 }
 
 /// Elapsed months minus the months the user chose to pause.
-export function effectiveMonths(plan, startDate, now = new Date()) {
+/// (A pause has no date of its own, so it holds back the whole timeline.)
+export function effectiveMonths(plan, startDate, at = new Date()) {
   if (!plan.progressionEnabled) return 0;
-  return Math.max(0, monthsElapsed(startDate, now) - plan.progressionPauseCount);
+  return Math.max(0, monthsElapsed(startDate, at) - plan.progressionPauseCount);
 }
 
 export function isPausedThisMonth(plan, startDate, now = new Date()) {
   return plan.progressionLastPausedMonth === monthsElapsed(startDate, now);
-}
-
-/// Fractional months between plan start and `date`, minus paused months —
-/// gives the chart a smooth target line instead of whole-month steps.
-export function fractionalEffectiveMonths(plan, startDate, date) {
-  if (!plan.progressionEnabled) return 0;
-  if (startOfDay(date) < startOfDay(startDate)) return 0;
-  const months = daysBetween(startDate, date) / 30.44;
-  return Math.max(0, months - plan.progressionPauseCount);
 }
 
 /// 'weight' | 'reps' | 'duration' | null — a slot tracks exactly one metric.
@@ -40,15 +36,10 @@ export function metricKind(slot) {
 
 const TARGET_FIELD = { weight: 'targetWeightKg', reps: 'targetReps', duration: 'targetDurationSeconds' };
 const ACTUAL_FIELD = { weight: 'weightKg', reps: 'repsCompleted', duration: 'durationSeconds' };
-const UNIT = { weight: 'kg', reps: 'reps', duration: 'sec' };
 
 export function baseValue(slot) {
   const kind = metricKind(slot);
   return kind ? slot[TARGET_FIELD[kind]] : null;
-}
-
-export function unitFor(slot) {
-  return UNIT[metricKind(slot)] ?? '';
 }
 
 /// Highest value logged among `sets`, read from the field `slot` tracks.
@@ -59,12 +50,25 @@ export function bestActualValue(sets, slot) {
   return values.length ? Math.max(...values) : null;
 }
 
-/// `slot` with its target raised for the months elapsed, rounded to a whole
-/// kg / rep / second.
-export function adjustedSlot(slot, plan, startDate, now = new Date()) {
-  const months = effectiveMonths(plan, startDate, now);
+/// Weight moves in half kilos, so a month's 2.5% shows up on a 20 kg lift.
+/// Reps and seconds are whole numbers.
+function roundTarget(kind, value) {
+  return kind === 'weight' ? Math.round(value * 2) / 2 : Math.round(value);
+}
+
+/// The slot's target on `at`: the original value raised for the months
+/// elapsed by then.
+export function targetValueAt(slot, plan, startDate, at = new Date()) {
   const kind = metricKind(slot);
-  if (months <= 0 || !kind) return slot;
-  const value = Math.round(baseValue(slot) * (1 + MONTHLY_INCREASE * months));
-  return { ...slot, [TARGET_FIELD[kind]]: value };
+  if (!kind) return null;
+  const months = effectiveMonths(plan, startDate, at);
+  const base = baseValue(slot);
+  return months > 0 ? roundTarget(kind, base * (1 + MONTHLY_INCREASE * months)) : base;
+}
+
+/// `slot` with its target raised to what applies on `at`.
+export function adjustedSlot(slot, plan, startDate, at = new Date()) {
+  const kind = metricKind(slot);
+  if (!kind || effectiveMonths(plan, startDate, at) <= 0) return slot;
+  return { ...slot, [TARGET_FIELD[kind]]: targetValueAt(slot, plan, startDate, at) };
 }

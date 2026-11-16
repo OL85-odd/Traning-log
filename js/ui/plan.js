@@ -1,23 +1,29 @@
 // The Plan tab: active plan header, progress drawer and the day timeline.
 // Swift: OddForm/Features/Plan/PlanView.swift + Components/*
 
-import { html, useState } from '../vendor/preact-htm.js';
+import { html, useLayoutEffect, useRef, useState } from '../vendor/preact-htm.js';
 import { format, isSameDay, startOfDay, toDate } from '../core/dates.js';
-import { DAY_TYPES, MODIFIERS, MODIFIER_PRIORITY } from '../core/models.js';
-import { deltaVsTarget, overallSeries, seriesFor, trackableExercises } from '../core/progressStats.js';
+import { DAY_TYPES, MODIFIERS, MODIFIER_PRIORITY, SKIP_REASONS, WEEKDAY_NAMES } from '../core/models.js';
+import { completionPercent } from '../core/planResolver.js';
+import { chartableExercises, overallSeries, seriesFor } from '../core/progressStats.js';
 import { isPausedThisMonth, monthsElapsed } from '../core/progression.js';
+import { isQuickSession } from '../core/store.js';
+import { ProgressChart, TrendLabel, seriesUnit } from './chart.js';
 import {
-  Chip, ExerciseIcon, ModifierBadges, Ring, completionColor, oneDecimal, slotDescription, store,
+  Alert, Chip, ExerciseIcon, ModifierBadges, Ring, completionColor, describeSets, slotDescription, store,
 } from './common.js';
 import { Icon } from './icons.js';
 import { ExerciseInfoButton } from './library.js';
 import { PlanEditorSheet } from './planEditor.js';
 import { PlanPickerSheet } from './planPicker.js';
+import { SkipReasonSheet } from './today.js';
 
 export function PlanView() {
   const [showPlanPicker, setShowPlanPicker] = useState(false);
   const plan = store.activePlan;
-  const hasDrawer = plan?.progressionEnabled && store.state.settings.activePlanStartDate;
+  // Progress is shown for whatever has been logged — it does not wait for
+  // automatic progression to be switched on.
+  const hasDrawer = plan != null && store.state.sessions.some(s => s.completedAt);
 
   return html`<div class="screen">
     <${ActivePlanHeader} plan=${plan} onChangePlan=${() => setShowPlanPicker(true)} />
@@ -26,7 +32,7 @@ export function PlanView() {
       ${hasDrawer && html`<${ProgressDrawer} plan=${plan} />`}
       <div class="scroll" style="padding-top:${hasDrawer ? 58 : 16}px">
         ${plan
-          ? html`<${Timeline} />`
+          ? html`<${Timeline} key=${plan.id} />`
           : html`<div class="empty">
               <${Icon} name="clipboard" size=${44} weight=${1.4} class="c-subtle" />
               <div class="t-title3">No active plan</div>
@@ -47,6 +53,13 @@ function ActivePlanHeader({ plan, onChangePlan }) {
   const weekly = plan?.planMode === 'weeklyCycle';
   const paused = plan && startDate && isPausedThisMonth(plan, startDate);
   const months = startDate ? monthsElapsed(startDate) : 0;
+  const program = store.programProgress;
+
+  const summary = weekly
+    ? `Weekly cycle${trainingDays > 0 ? ` · ${trainingDays} training days / week` : ''}`
+    : !program ? 'Program'
+    : program.finished ? `Program · completed (${program.weeks} weeks)`
+    : `Program · week ${program.week} of ${program.weeks}`;
 
   return html`<div class="col" style="gap:6px;padding:16px var(--gutter) 20px">
     <div class="row">
@@ -57,9 +70,8 @@ function ActivePlanHeader({ plan, onChangePlan }) {
     ${plan
       ? html`
         <h1 class="t-title">${plan.name}</h1>
-        <div class="mono t-caption c-subtle">
-          ${weekly ? 'Weekly cycle' : 'Program'}${weekly && trainingDays > 0 ? ` · ${trainingDays} training days / week` : ''}
-        </div>
+        <div class="mono t-caption c-subtle">${summary}</div>
+        <${Adherence} />
         <div class="row" style="gap:8px;margin-top:2px">
           <span class="mode-badge">${weekly ? 'WEEKLY CYCLE' : 'PROGRAM'}</span>
           ${plan.progressionEnabled && html`
@@ -73,64 +85,110 @@ function ActivePlanHeader({ plan, onChangePlan }) {
   </div>`;
 }
 
-// MARK: - Progress drawer (Swift: ProgressDrawer + ProgressChartView)
-
-function DeltaLabel({ delta, small }) {
-  if (delta == null) return null;
-  const up = delta >= 0;
-  return html`<span class="row mono semibold ${small ? 't-caption2' : 't-caption'} ${up ? 'c-green' : 'c-red'}" style="gap:3px">
-    <${Icon} name=${up ? 'arrow-up-right' : 'arrow-down-right'} size=${11} weight=${2.6} />
-    ${up ? '+' : ''}${Math.round(delta)}% vs target
-  </span>`;
+/// "Last 4 weeks: 9 of 12 done · 2 skipped (1 sick, 1 short on time) · 1 not logged".
+/// The point of giving a reason when skipping: the record says why.
+function Adherence() {
+  const { planned, done, skipped, missed } = store.adherence(28);
+  if (planned === 0) return null;
+  const skippedTotal = Object.values(skipped).reduce((a, b) => a + b, 0);
+  const reasons = Object.entries(skipped)
+    .map(([id, count]) => `${count} ${(SKIP_REASONS[id] ?? SKIP_REASONS.other).label.toLowerCase()}`)
+    .join(', ');
+  return html`<div class="mono t-caption2 c-subtle" style="line-height:1.45">
+    Last 4 weeks: ${done} of ${planned} done${skippedTotal ? ` · ${skippedTotal} skipped (${reasons})` : ''}${missed ? ` · ${missed} not logged` : ''}
+  </div>`;
 }
+
+// MARK: - Progress drawer (Swift: ProgressDrawer + ProgressChartView)
 
 function ProgressDrawer({ plan }) {
   const [expanded, setExpanded] = useState(false);
-  const [tab, setTab] = useState('overall'); // 'overall' or an exercise id
+  const [picked, setPicked] = useState(null); // 'overall' or an exercise id; null = the first tab
 
   const startDate = store.state.settings.activePlanStartDate;
   const sessions = store.state.sessions;
+  // The overall score compares against rising targets, so it only exists
+  // while automatic progression is on. Per-exercise charts always do.
   const overall = overallSeries(plan, startDate, sessions);
-  const exercises = trackableExercises(plan, store.state.exercises);
+  // A tab per exercise of the plan — also before it has been logged, so the
+  // drawer shows what it is going to follow — then anything else with numbers.
+  const exercises = chartableExercises(plan, store.state.exercises, sessions)
+    .map(exercise => ({ exercise, series: seriesFor(exercise, plan, startDate, sessions) }))
+    .filter(entry => entry.series);
+
+  const tabs = [
+    ...(overall?.points.length ? [{ id: 'overall', label: 'OVERALL', series: overall }] : []),
+    ...exercises.map(({ exercise, series }) => ({ id: exercise.id, label: exercise.name.toUpperCase(), name: exercise.name, series })),
+  ];
+  const count = t => t.series.points.length;
+  // Opens on the tab with most to show: a line, else a first number, else the first.
+  const tab = tabs.find(t => t.id === picked)
+    ?? tabs.find(t => count(t) > 1) ?? tabs.find(t => count(t) > 0) ?? tabs[0];
+  const logged = tabs.filter(t => t.id !== 'overall' && count(t) > 0).length;
 
   if (!expanded) {
     return html`<div class="drawer">
       <button class="drawer-teaser" onClick=${() => setExpanded(true)} aria-expanded="false">
-        ${overall?.points.length
-          ? html`<div style="width:48px"><${ProgressChart} series=${overall} compact /></div>
-                 <${DeltaLabel} delta=${deltaVsTarget(overall)} />`
+        ${tab && count(tab) > 1
+          ? html`<div style="width:48px"><${ProgressChart} series=${tab.series} compact /></div>
+                 <span class="mono t-caption c-subtle truncate">${tab.id === 'overall' ? 'Progress' : tab.label}</span>
+                 <${TrendLabel} series=${tab.series} />`
           : html`<${Icon} name="trend" size=${13} class="c-subtle" />
-                 <span class="mono t-caption c-subtle">Progress — not enough data yet</span>`}
+                 <span class="mono t-caption c-subtle truncate">${logged > 0
+                   ? `Progress · ${logged} ${logged === 1 ? 'exercise' : 'exercises'} logged once`
+                   : 'Progress — fills in as you log numbers'}</span>`}
         <span class="spacer"></span>
         <${Icon} name="chevron-down" size=${12} weight=${2.4} class="c-subtle" />
       </button>
     </div>`;
   }
 
-  const exercise = exercises.find(e => e.id === tab);
-  const series = tab === 'overall' ? overall : exercise && seriesFor(exercise, plan, startDate, sessions);
+  const unit = tab && seriesUnit(tab.series);
+  const hasTarget = tab?.series.currentTarget != null;
+  const points = tab?.series.points ?? [];
+  const latest = points[points.length - 1];
+  const best = points.length ? Math.max(...points.map(p => p.actual)) : null;
+  const value = v => (tab.id === 'overall' ? unit.show(v) : `${unit.show(v)} ${unit.name}`);
 
   return html`<div class="drawer">
     <div class="chip-row" style="padding-top:14px;gap:6px">
-      <${Chip} label="OVERALL" selected=${tab === 'overall'} onClick=${() => setTab('overall')} />
-      ${exercises.map(e => html`<${Chip} label=${e.name.toUpperCase()} selected=${tab === e.id} onClick=${() => setTab(e.id)} />`)}
+      ${tabs.map(t => html`<${Chip} label=${t.label} selected=${t.id === tab.id} onClick=${() => setPicked(t.id)} />`)}
     </div>
 
-    ${series?.points.length
+    ${tab
       ? html`<div class="col" style="gap:8px;padding:12px var(--gutter) 0">
           <div class="row">
-            <span class="label">${tab === 'overall' ? 'Progress score' : `Target · ${series.unit}`}</span>
+            <span class="label">${tab.id === 'overall' ? 'Progress score · 100 = the plan as written' : `Best set · ${unit.name}`}</span>
             <span class="spacer"></span>
-            <${DeltaLabel} delta=${deltaVsTarget(series)} small />
+            <${TrendLabel} series=${tab.series} small />
           </div>
-          <div class="card chart-box"><${ProgressChart} series=${series} /></div>
-          <div class="row label" style="gap:14px;letter-spacing:0">
-            <span class="row" style="gap:5px"><i class="legend-line dashed"></i>TARGET (+2.5%/MO)</span>
-            <span class="row" style="gap:5px"><i class="legend-line"></i>ACTUAL</span>
-          </div>
+          ${points.length > 1
+            ? html`<div class="card chart-box"><${ProgressChart} series=${tab.series} unit=${unit} /></div>
+                <div class="row label" style="gap:14px;letter-spacing:0">
+                  ${hasTarget && html`<span class="row" style="gap:5px">
+                    <i class="legend-line dashed"></i>TARGET · NOW ${unit.show(tab.series.currentTarget)}
+                  </span>`}
+                  <span class="row" style="gap:5px"><i class="legend-line"></i>${hasTarget ? 'ACTUAL' : 'WHAT YOU DID'}</span>
+                </div>`
+            // One number is not a trend, and none is nothing: say so in words
+            // instead of drawing a lone dot in an empty box.
+            : html`<div class="card chart-box chart-empty">
+                ${latest
+                  ? html`<div class="t-title3">${value(latest.actual)}</div>
+                      <div class="mono t-caption c-subtle">Logged once, ${format.mediumDate(latest.date)}.</div>
+                      <div class="mono t-caption c-subtle">The line starts the second time you log ${tab.name ?? 'a session'}.</div>`
+                  : html`<div class="mono t-caption c-subtle">Not logged yet.</div>
+                      <div class="mono t-caption c-subtle">Finish a session with ${tab.name} and its first number lands here.</div>`}
+              </div>`}
+          ${points.length > 1 && html`<div class="chart-facts">
+            <div><span class="label">Sessions</span><span class="mono t-sub">${points.length}</span></div>
+            <div><span class="label">First</span><span class="mono t-sub">${value(points[0].actual)}</span></div>
+            <div><span class="label">Best</span><span class="mono t-sub">${value(best)}</span></div>
+            <div><span class="label">Latest</span><span class="mono t-sub">${value(latest.actual)}</span></div>
+          </div>`}
         </div>`
       : html`<p class="mono t-caption c-subtle" style="padding:16px var(--gutter) 0;line-height:1.45">
-          No numbers logged for this yet — enter actual reps, weight, or duration when you complete a set (just checking it off isn't enough to chart).
+          Nothing to chart yet. It fills in as you finish sessions.
         </p>`}
 
     <button class="drawer-collapse" onClick=${() => setExpanded(false)} aria-expanded="true">
@@ -139,49 +197,27 @@ function ProgressDrawer({ plan }) {
   </div>`;
 }
 
-/// Dashed target line climbing to "now", the actual line tracking along it,
-/// and a dot per session — green where the target was met, red where not.
-function ProgressChart({ series, compact }) {
-  const height = compact ? 20 : 92;
-  const pad = compact ? 2 : 8;
-  const now = Date.now();
-  const points = series.points;
-  const first = points[0] ? toDate(points[0].date).getTime() : now;
-
-  const values = [...points.flatMap(p => [p.target, p.actual]), series.currentTarget];
-  const min = Math.min(...values), max = Math.max(...values);
-
-  // x is a percentage of the width (so the chart needs no measuring), y is in px.
-  const x = date => {
-    const total = now - first;
-    const fraction = total > 0 ? Math.max(0, Math.min(1, (toDate(date).getTime() - first) / total)) : 1;
-    return `${fraction * 100}%`;
-  };
-  const y = value => pad + (max > min ? 1 - (value - min) / (max - min) : 0.5) * (height - pad * 2);
-  const dotColor = p => (p.actual >= p.target ? 'var(--green)' : 'var(--red)');
-  const last = points[points.length - 1];
-
-  return html`<div style="padding:0 ${pad}px">
-    <svg width="100%" height=${height} style="display:block;overflow:visible" role="img"
-      aria-label="Target versus actual over time">
-      <line x1="0%" y1=${y(points[0]?.target ?? series.currentTarget)} x2="100%" y2=${y(series.currentTarget)}
-        stroke="var(--accent)" stroke-opacity="0.55" stroke-width=${compact ? 1 : 1.5} stroke-dasharray="3 4" />
-      ${points.slice(1).map((p, i) => html`<line x1=${x(points[i].date)} y1=${y(points[i].actual)} x2=${x(p.date)} y2=${y(p.actual)}
-        stroke="var(--text)" stroke-opacity="0.85" stroke-width=${compact ? 1.5 : 2} stroke-linecap="round" />`)}
-      ${!compact && points.map(p => html`<circle cx=${x(p.date)} cy=${y(p.actual)} r="3.5" fill=${dotColor(p)} />`)}
-      ${!compact && last && html`<circle cx=${x(last.date)} cy=${y(last.actual)} r="6" fill="none" stroke=${dotColor(last)} stroke-width="1.5" />`}
-    </svg>
-  </div>`;
-}
-
 // MARK: - Timeline (Swift: TimelineView)
+
+const PAGE_DAYS = 30;
 
 function Timeline() {
   const [expandedKey, setExpandedKey] = useState(null);
   const [editing, setEditing] = useState(null); // { plan, dayIndex }
+  const [daysBack, setDaysBack] = useState(PAGE_DAYS);
+  const root = useRef(null);
 
-  // 14 days ahead down to 30 days back, newest at the top.
-  const statuses = store.dailyStatuses(-30, 14).reverse();
+  // Two weeks ahead down to the past, newest at the top. The past reaches
+  // back only as far as there is something to show.
+  const history = store.historyDays;
+  // (A last handful of days is shown rather than left behind one more tap.)
+  const back = history - daysBack <= 7 ? history : daysBack;
+  const statuses = store.dailyStatuses(-back, 14).reverse();
+
+  // Open on today, not on the day two weeks from now.
+  useLayoutEffect(() => {
+    root.current?.querySelector('.tl-today-anchor')?.scrollIntoView({ block: 'start' });
+  }, []);
 
   const openEditor = status => {
     const plan = store.activePlan;
@@ -190,11 +226,18 @@ function Timeline() {
     if (dayIndex !== -1) setEditing({ plan, dayIndex });
   };
 
-  return html`<div style="padding-bottom:16px">
+  // The room below the oldest row lets today reach the top of the screen
+  // even when there is little or no history under it.
+  return html`<div ref=${root} style="padding-bottom:60vh">
     ${statuses.map(status => html`<${TimelineRow} key=${status.key} status=${status}
       expanded=${expandedKey === status.key}
       onToggle=${() => setExpandedKey(expandedKey === status.key ? null : status.key)}
       onEditDay=${() => openEditor(status)} />`)}
+    ${history > back && html`<div style="padding:0 var(--gutter)">
+      <button class="btn-soft tall" onClick=${() => setDaysBack(daysBack + PAGE_DAYS * 2)}>
+        <${Icon} name="chevron-down" size=${13} weight=${2.4} />Show earlier
+      </button>
+    </div>`}
     ${editing && html`<${PlanEditorSheet} plan=${editing.plan} dayIndex=${editing.dayIndex} onClose=${() => setEditing(null)} />`}
   </div>`;
 }
@@ -205,11 +248,13 @@ function TimelineRow({ status, expanded, onToggle, onEditDay }) {
   const isFuture = status.date > today;
   const isRest = status.dayType === 'rest';
   const hasModifiers = status.feelModifiers.length > 0;
-  const canExpand = !isRest || hasModifiers;
+  const canExpand = !status.isBlank && (!isRest || hasModifiers);
   const open = expanded && canExpand;
   const type = DAY_TYPES[status.dayType];
+  const skip = status.skipReason && (SKIP_REASONS[status.skipReason] ?? SKIP_REASONS.other);
 
   return html`<div>
+    ${isToday && html`<div class="tl-today-anchor"></div>`}
     <button class="tl-row ${isToday ? 'today' : ''} ${open ? 'expanded' : ''}" disabled=${!canExpand}
       aria-expanded=${canExpand ? String(open) : undefined} onClick=${onToggle}>
       <div class="tl-date">
@@ -219,19 +264,27 @@ function TimelineRow({ status, expanded, onToggle, onEditDay }) {
       </div>
       <div class="tl-node"><${NodeCircle} status=${status} isToday=${isToday} /></div>
       <div class="tl-main">
-        ${isRest
+        ${status.isBlank
+          ? html`<span class="mono t-caption c-subtle" style="padding-top:2px">—</span>`
+          : isRest
           ? html`<span class="mono t-caption c-subtle" style="padding-top:2px">Rest</span>`
           : html`
             <span class="t-sub medium">${type.name}</span>
-            ${isToday && status.completionPercent === 0
-              ? html`<span class="mono t-caption c-accent">Today · not started</span>`
-              : status.completionPercent > 0 && html`<span class="row" style="gap:6px">
+            ${status.hasLog
+              ? html`<span class="row" style="gap:6px">
                   <${Icon} name=${type.icon} size=${14} class="c-${type.color}" />
                   <${CompletionBubble} percent=${status.completionPercent} />
-                </span>`}`}
+                </span>`
+              : skip
+              ? html`<span class="row mono t-caption c-${skip.color}" style="gap:5px">
+                  <${Icon} name="skip" size=${12} weight=${2.2} />Skipped · ${skip.label}
+                </span>`
+              : isToday
+              ? html`<span class="mono t-caption c-accent">Today · not started</span>`
+              : !isFuture && html`<span class="mono t-caption c-subtle">Not logged</span>`}`}
         ${hasModifiers && html`<${ModifierBadges} modifiers=${status.feelModifiers} />`}
       </div>
-      ${!isRest && html`<span class="tl-chevron"><${Icon} name="chevron-down" size=${12} weight=${2.4} /></span>`}
+      ${canExpand && !isRest && html`<span class="tl-chevron"><${Icon} name="chevron-down" size=${12} weight=${2.4} /></span>`}
     </button>
     ${open && html`<${DayDetailPanel} status=${status}
       isToday=${isToday} isFuture=${isFuture} onEditDay=${onEditDay} />`}
@@ -270,15 +323,22 @@ function CompletionBubble({ percent }) {
 // MARK: - Expanded day (Swift: DayDetailPanel)
 
 function DayDetailPanel({ status, isToday, isFuture, onEditDay }) {
+  const [deleting, setDeleting] = useState(null); // session
+  const [choosingReason, setChoosingReason] = useState(false);
+  const skip = status.skipReason && (SKIP_REASONS[status.skipReason] ?? SKIP_REASONS.other);
   const isPast = !isToday && !isFuture;
-  const planDay = store.planDayOn(status.date);
-  const log = store.sessionOn(status.date);
+  const weightUnit = store.state.settings.preferredUnit;
 
-  const editButton = html`<button class="btn-soft" onClick=${onEditDay}>
-    <${Icon} name="pencil" size=${14} weight=${2.2} />Edit Day
-  </button>`;
+  const start = store.state.settings.activePlanStartDate;
+  const coveredByPlan = start != null && status.date >= startOfDay(start);
+  const planDay = coveredByPlan ? store.planDayOn(status.date) : null;
+  const isTrainingDay = planDay != null && planDay.dayType !== 'rest';
 
-  const plannedExercises = planDay && planDay.blocks.length > 0
+  const logs = store.sessionsOn(status.date).filter(s => s.completedAt);
+  const planLog = logs.find(s => !isQuickSession(s));
+  const quickLogs = logs.filter(isQuickSession);
+
+  const plannedExercises = isTrainingDay && (planDay.blocks.length > 0
     ? planDay.blocks.map(block => html`<div key=${block.id} class="col" style="gap:8px">
         ${block.blockName && html`<div class="label" style="letter-spacing:1px">${block.blockName}</div>`}
         ${block.exercises.map(slot => {
@@ -287,44 +347,82 @@ function DayDetailPanel({ status, isToday, isFuture, onEditDay }) {
             <${ExerciseIcon} exercise=${exercise} radius=${8} />
             <div style="flex:1;min-width:0">
               <div class="t-sub medium">${exercise.name}</div>
-              <div class="mono t-caption c-subtle" style="margin-top:2px">${slotDescription(slot)}</div>
+              <div class="mono t-caption c-subtle" style="margin-top:2px">${slotDescription(slot, weightUnit)}</div>
             </div>
             <${ExerciseInfoButton} exercise=${exercise} />
           </div>`;
         })}
       </div>`)
-    : html`<p class="mono t-caption c-subtle">No exercises planned for this day.</p>`;
+    : html`<p class="mono t-caption c-subtle">No exercises planned for this day.</p>`);
 
-  let content;
-  if (isPast && log) {
-    content = html`<${PastSession} log=${log} status=${status} />${editButton}`;
-  } else if (isPast) {
-    content = html`
-      <p class="mono t-caption c-subtle">No session logged for this day.</p>
-      <button class="btn-soft" onClick=${() => store.startSession(planDay, status.date)}>
-        <${Icon} name="square-pencil" size=${15} weight=${2} />Log this session
+  // One line saying how far an edit of the plan reaches.
+  const editScope = planDay?.dayOfWeek != null
+    ? `Edit plan · every ${WEEKDAY_NAMES[planDay.dayOfWeek - 1]}`
+    : 'Edit plan · this day';
+
+  const logCard = log => html`<div key=${log.id} class="col" style="gap:12px">
+    <${PastSession} log=${log} planDay=${isQuickSession(log) ? null : planDay} />
+    <div class="row" style="gap:8px">
+      <button class="btn-soft" style="flex:1" onClick=${() => store.resumeSession(log)}>
+        <${Icon} name="square-pencil" size=${14} weight=${2} />Edit session
       </button>
-      ${editButton}`;
-  } else if (isToday) {
-    content = html`
-      ${plannedExercises}
-      <button class="btn-primary compact" onClick=${() => store.startSession(planDay)}>START SESSION</button>
-      ${editButton}`;
-  } else {
-    content = html`${plannedExercises}${editButton}`;
-  }
+      <button class="btn-soft icon" style="--tint:var(--red)" aria-label="Delete session"
+        onClick=${() => setDeleting(log)}>
+        <${Icon} name="trash" size=${14} />
+      </button>
+    </div>
+  </div>`;
 
   return html`<div class="card tl-detail">
     <div class="rule-label label" style="letter-spacing:0">${isPast ? 'SESSION LOG' : isToday ? 'TODAY' : 'UPCOMING'}</div>
-    <div class="col" style="gap:12px">${content}</div>
+    <div class="col" style="gap:12px">
+      ${planLog
+        ? logCard(planLog)
+        : isTrainingDay && (isFuture
+          ? plannedExercises
+          : isToday
+          ? html`${plannedExercises}
+              <button class="btn-primary compact" onClick=${() => store.startSession(planDay)}>START SESSION</button>`
+          : html`<p class="mono t-caption c-subtle">
+                ${skip ? `Skipped — ${skip.label.toLowerCase()}.` : 'No session logged for this day.'}
+              </p>
+              <button class="btn-soft" onClick=${() => store.startSession(planDay, status.date)}>
+                <${Icon} name="square-pencil" size=${15} weight=${2} />Log this session
+              </button>
+              ${skip
+                ? html`<button class="btn-soft" onClick=${() => store.unskipSession(status.date)}>
+                    <${Icon} name="undo" size=${14} />Undo skip
+                  </button>`
+                : html`<button class="btn-soft" onClick=${() => setChoosingReason(true)}>
+                    <${Icon} name="skip" size=${14} />Mark as skipped
+                  </button>`}`)}
+      ${quickLogs.map(log => html`
+        ${(planLog || isTrainingDay) && html`<div class="divider flush"></div>`}
+        ${logCard(log)}`)}
+      ${isTrainingDay && html`<button class="btn-plain mono t-caption c-subtle" style="align-self:flex-start;padding:4px 0"
+        onClick=${onEditDay}>
+        <${Icon} name="pencil" size=${12} weight=${2.2} />${editScope}
+      </button>`}
+    </div>
+
+    ${choosingReason && html`<${SkipReasonSheet}
+      onPick=${reason => store.skipSession(reason, status.date)} onCancel=${() => setChoosingReason(false)} />`}
+
+    ${deleting && html`<${Alert} title="Delete session?"
+      message=${`This removes the ${deleting.title ?? 'session'} log from ${format.mediumDate(deleting.date)}. It cannot be undone.`}
+      buttons=${[
+        { label: 'Cancel', role: 'cancel', onClick: () => setDeleting(null) },
+        { label: 'Delete', role: 'destructive', onClick: () => { store.deleteSession(deleting.id); setDeleting(null); } },
+      ]} />`}
   </div>`;
 }
 
-function PastSession({ log, status }) {
+function PastSession({ log, planDay }) {
+  const weightUnit = store.state.settings.preferredUnit;
   const completed = log.sets.filter(s => s.isCompleted);
-  const duration = log.startedAt && log.completedAt
-    ? format.clock((toDate(log.completedAt) - toDate(log.startedAt)) / 1000)
-    : null;
+  const percent = completionPercent(log, planDay, store.hasExercise);
+  const seconds = log.startedAt && log.completedAt ? (toDate(log.completedAt) - toDate(log.startedAt)) / 1000 : 0;
+  const duration = seconds >= 1 ? format.clock(seconds) : null;
 
   // Completed sets grouped by exercise, in the order they were logged.
   const groups = new Map();
@@ -342,28 +440,28 @@ function PastSession({ log, status }) {
   </div>`;
 
   return html`
+    ${log.title && html`<div class="row" style="gap:8px">
+      <span class="t-sub semibold">${log.title}</span>
+      ${isQuickSession(log) && html`<span class="tag">QUICK</span>`}
+    </div>`}
     ${log.feelModifiers.length > 0 && html`<${ModifierBadges} modifiers=${log.feelModifiers} />`}
     <div class="row" style="gap:16px">
       ${duration && stat('clock', duration, 'duration')}
-      ${stat('check-circle', `${Math.round(status.completionPercent * 100)}%`, 'completed')}
+      ${stat('check-circle', `${Math.round(percent * 100)}%`, 'completed')}
       ${log.sets.length > 0 && stat('dumbbell', completed.length, 'sets done')}
     </div>
     ${groups.size > 0
       ? html`<div class="divider flush"></div>
           ${[...groups].map(([exerciseID, sets]) => {
             const exercise = store.exerciseByID(exerciseID);
-            return exercise && html`<div key=${exerciseID} class="col" style="gap:4px">
-              <div class="t-sub medium">${exercise.name}</div>
-              ${[...sets].sort((a, b) => a.setNumber - b.setNumber).map(set => html`
-                <div class="row mono t-caption2" style="gap:8px">
-                  <span class="c-subtle" style="width:36px;font-size:10px">Set ${set.setNumber}</span>
-                  ${set.repsCompleted != null && html`<span>${set.repsCompleted} reps</span>`}
-                  ${set.weightKg != null && html`<span class="c-accent">· ${oneDecimal(set.weightKg)} kg</span>`}
-                  ${set.durationSeconds != null && html`<span>${set.durationSeconds}s</span>`}
-                </div>`)}
+            // A slot that only carries units: enough to word the numbers.
+            const seconds = sets[0].durationSeconds;
+            const wholeMinutes = seconds != null && seconds >= 120 && seconds % 60 === 0;
+            const slot = { unit1: 'Reps', unit2: wholeMinutes ? 'Min' : 'Sek', targetDurationSeconds: seconds };
+            return html`<div key=${exerciseID} class="col" style="gap:3px">
+              <div class="t-sub medium">${exercise?.name ?? 'Deleted exercise'}</div>
+              <div class="mono t-caption c-subtle">${describeSets(sets, slot, weightUnit)}</div>
             </div>`;
           })}`
-      : html`<p class="mono t-caption c-subtle">
-          ${log.planDayTemplateID ? 'No sets logged for this session.' : 'Quick session — no sets logged'}
-        </p>`}`;
+      : html`<p class="mono t-caption c-subtle">No sets ticked off in this session.</p>`}`;
 }

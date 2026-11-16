@@ -4,11 +4,14 @@
 import { html, useRef, useState } from '../vendor/preact-htm.js';
 import { BackupError, backupFileName, makeBackup, parseBackup, serializeBackup } from '../core/backup.js';
 import { format } from '../core/dates.js';
-import { Alert, Sheet, Switch, store } from './common.js';
+import { Alert, Sheet, store } from './common.js';
 import { Icon } from './icons.js';
 import { PlanPickerSheet } from './planPicker.js';
 
 export const APP_VERSION = '1.0';
+
+/// Settings → Appearance. "System" follows the device's light or dark mode.
+const THEMES = { system: 'System', dark: 'Dark', light: 'Light' };
 
 export function SettingsView() {
   const [sheet, setSheet] = useState(null); // 'plan' | 'export' | 'import'
@@ -34,31 +37,30 @@ export function SettingsView() {
         </div>`}
       </div>
 
-      <div class="list-header">Odd Form Pro</div>
-      <div class="list-group">
-        <div class="list-row" style="flex-direction:column;align-items:flex-start">
-          <span class="t-sub c-subtle">Unlock unlimited history, custom plans, and JSON backup.</span>
-          ${settings.isPro
-            ? html`<span class="row mono t-sub c-green" style="gap:6px"><${Icon} name="check-circle-fill" size=${16} />Pro active</span>`
-            : html`<span class="mono t-sub c-subtle">Not unlocked</span>`}
-        </div>
-      </div>
-
       <div class="list-header">Backup</div>
       <div class="list-group">
-        ${settings.isPro
-          ? html`
-            <button class="list-row" onClick=${() => setSheet('export')}><span>Export backup</span><span class="spacer"></span>${chevron}</button>
-            <button class="list-row" onClick=${() => setSheet('import')}><span>Import backup</span><span class="spacer"></span>${chevron}</button>
-            ${backupAge != null && html`<div class="list-row">
-              <span>Last backup</span><span class="spacer"></span>
-              <span class="list-value">${backupAge === 0 ? 'Today' : `${backupAge}d ago`}</span>
-            </div>`}`
-          : html`<div class="list-row"><span class="t-sub c-subtle">Unlock Odd Form Pro to export and import your data as a backup file.</span></div>`}
+        <button class="list-row" onClick=${() => setSheet('export')}><span>Export backup</span><span class="spacer"></span>${chevron}</button>
+        <button class="list-row" onClick=${() => setSheet('import')}><span>Import backup</span><span class="spacer"></span>${chevron}</button>
+        <div class="list-row">
+          <span>Last backup</span><span class="spacer"></span>
+          <span class="list-value ${backupAge == null || backupAge > 30 ? 'c-sand' : ''}">
+            ${backupAge == null ? 'Never' : backupAge === 0 ? 'Today' : `${backupAge}d ago`}
+          </span>
+        </div>
       </div>
 
       <div class="list-header">General</div>
       <div class="list-group">
+        <label class="list-row">
+          <span>Appearance</span><span class="spacer"></span>
+          <span class="select-wrap">
+            ${THEMES[settings.theme] ?? THEMES.system}<${Icon} name="chevrons-updown" size=${13} weight=${2.2} />
+            <select value=${settings.theme ?? 'system'} aria-label="Appearance"
+              onChange=${e => store.updateSettings({ theme: e.target.value })}>
+              ${Object.entries(THEMES).map(([id, name]) => html`<option value=${id}>${name}</option>`)}
+            </select>
+          </span>
+        </label>
         <label class="list-row">
           <span>Weight unit</span><span class="spacer"></span>
           <span class="select-wrap">
@@ -69,17 +71,6 @@ export function SettingsView() {
             </select>
           </span>
         </label>
-      </div>
-
-      <div class="list-header">Prototype</div>
-      <div class="list-group">
-        <div class="list-row">
-          <div style="flex:1">
-            <div>Pro unlocked</div>
-            <div class="mono t-caption c-subtle" style="margin-top:2px">Switch off to see the free tier</div>
-          </div>
-          <${Switch} on=${settings.isPro} onChange=${isPro => store.updateSettings({ isPro })} label="Pro unlocked" />
-        </div>
       </div>
 
       <div class="list-header">About</div>
@@ -124,7 +115,7 @@ async function deliverFile(name, text) {
   return true;
 }
 
-function BackupExportSheet({ onClose }) {
+export function BackupExportSheet({ onClose }) {
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState(null);

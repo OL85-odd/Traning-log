@@ -4,14 +4,30 @@
 
 import { html, useState } from '../vendor/preact-htm.js';
 import { builtInPlans } from '../core/builtin.js';
-import { DAY_TYPES, WEEKDAY_NAMES, newPlan, newPlanDay, slotsOf, uuid } from '../core/models.js';
+import { DAY_TYPES, EQUIPMENT, WEEKDAY_NAMES, newPlan, newPlanDay, slotsOf, uuid } from '../core/models.js';
+import { daysPerWeek } from '../core/recommend.js';
 import { ActionSheet, Alert, Chip, Sheet, Switch, store } from './common.js';
 import { Icon } from './icons.js';
 import { DayExerciseEditor } from './planEditor.js';
 
 const clone = value => JSON.parse(JSON.stringify(value));
-const trainingDayCount = plan => plan.days.filter(d => d.dayType !== 'rest').length;
-const modeName = plan => (plan.planMode === 'weeklyCycle' ? 'Weekly cycle' : 'Program');
+/// The kinds of plan the picker can be narrowed to.
+const FOCUS_NAMES = {
+  calisthenics: 'Calisthenics', strength: 'Strength', hiit: 'HIIT', cardio: 'Cardio', yoga: 'Yoga & mobility', mix: 'Mixed',
+};
+const LEVELS = ['Beginner', 'Intermediate', 'Advanced'];
+
+/// "Calisthenics · 3 days / week · Beginner · Pull-up bar"
+function planFacts(plan) {
+  const days = daysPerWeek(plan);
+  return [
+    plan.isCustom ? 'Your plan' : FOCUS_NAMES[plan.focus],
+    plan.planMode === 'finiteProgram' ? `${Math.ceil(plan.days.length / 7)}-week program` : null,
+    days > 0 ? `${days} ${days === 1 ? 'day' : 'days'} / week` : null,
+    plan.isCustom ? null : LEVELS[(plan.level ?? 1) - 1],
+    plan.equipment && plan.equipment !== 'none' ? EQUIPMENT[plan.equipment] : null,
+  ].filter(Boolean).join(' · ');
+}
 
 // MARK: - Plan picker
 
@@ -21,6 +37,12 @@ export function PlanPickerSheet({ onClose }) {
   const [menuFor, setMenuFor] = useState(null);       // plan
   const [copying, setCopying] = useState(null);       // { plan, name }
   const [deleting, setDeleting] = useState(null);     // plan
+  const [created, setCreated] = useState(null);       // plan just created, not yet in use
+  const [focus, setFocus] = useState(null);           // narrow the list to one kind; 'mine' = your own
+
+  const plans = store.state.plans.filter(plan =>
+    !focus || (focus === 'mine' ? plan.isCustom : !plan.isCustom && plan.focus === focus));
+  const hasOwn = store.state.plans.some(p => p.isCustom);
 
   const copyPlan = () => {
     const { plan, name } = copying;
@@ -34,18 +56,27 @@ export function PlanPickerSheet({ onClose }) {
     left=${{ label: 'Cancel', onClick: onClose }}
     right=${{ label: html`<${Icon} name="plus" size=${20} weight=${2.2} />`, strong: true, onClick: () => setCreating(true) }}
     onClose=${onClose}>
-    <div class="list" style="padding-top:16px">
+    <div class="chip-row" style="padding-top:14px">
+      <${Chip} label="All" selected=${focus === null} onClick=${() => setFocus(null)} />
+      ${hasOwn && html`<${Chip} label="Mine" selected=${focus === 'mine'} onClick=${() => setFocus('mine')} />`}
+      ${Object.entries(FOCUS_NAMES).map(([id, name]) => html`
+        <${Chip} label=${name} selected=${focus === id} onClick=${() => setFocus(id)} />`)}
+    </div>
+    <div class="list" style="padding-top:12px">
       <div class="list-group">
-        ${store.state.plans.map(plan => {
-          const days = trainingDayCount(plan);
+        ${plans.length === 0 && html`<div class="list-row"><span class="t-sub c-subtle">No plans of this kind.</span></div>`}
+        ${plans.map(plan => {
           return html`<div key=${plan.id} class="list-row" style="padding:0">
             <button class="row pressable" style="flex:1;min-width:0;gap:8px;padding:11px 0 11px 16px"
-              onClick=${() => { store.setActivePlan(plan); onClose(); }}>
+              onClick=${() => {
+                // Tapping the plan already in use just closes the sheet; it does not start it over.
+                store.setActivePlan(plan);
+                onClose();
+              }}>
               <div style="flex:1;min-width:0">
                 <div class="medium truncate">${plan.name}</div>
-                <div class="mono t-caption c-subtle" style="margin-top:4px">
-                  ${modeName(plan)}${days > 0 ? ` · ${days} training days` : ''}
-                </div>
+                <div class="mono t-caption c-subtle" style="margin-top:4px">${planFacts(plan)}</div>
+                ${plan.summary && html`<div class="t-caption c-subtle" style="margin-top:4px;line-height:1.35;white-space:normal">${plan.summary}</div>`}
               </div>
               ${store.state.settings.activePlanID === plan.id && html`<${Icon} name="check" size=${18} weight=${2.4} class="c-green" />`}
             </button>
@@ -81,7 +112,14 @@ export function PlanPickerSheet({ onClose }) {
         { label: 'Delete', role: 'destructive', onClick: () => { store.deletePlan(deleting.id); setDeleting(null); } },
       ]} />`}
 
-    ${creating && html`<${CreatePlanSheet} onClose=${() => setCreating(false)} />`}
+    ${created && html`<${Alert} title="Use this plan now?"
+      message=${`"${created.name}" is saved. Start it today, or keep ${store.activePlan ? `"${store.activePlan.name}"` : 'things as they are'} for now.`}
+      buttons=${[
+        { label: 'Not now', onClick: () => setCreated(null) },
+        { label: 'Start today', role: 'primary', onClick: () => { store.setActivePlan(created); setCreated(null); onClose(); } },
+      ]} />`}
+
+    ${creating && html`<${CreatePlanSheet} onClose=${() => setCreating(false)} onCreated=${setCreated} />`}
     ${editing && html`<${CreatePlanSheet} key=${editing.id} editing=${editing} onClose=${() => setEditing(null)} />`}
   <//>`;
 }
@@ -98,7 +136,7 @@ function dayLabel(day) {
   return type;
 }
 
-export function CreatePlanSheet({ editing = null, onClose }) {
+export function CreatePlanSheet({ editing = null, onClose, onCreated }) {
   const [step, setStep] = useState(editing ? 'form' : 'chooseType');
   const [name, setName] = useState(editing?.name ?? '');
   const [planMode, setPlanMode] = useState(editing?.planMode ?? 'weeklyCycle');
@@ -125,20 +163,30 @@ export function CreatePlanSheet({ editing = null, onClose }) {
       const free = days.findIndex(d => d.dayType === 'rest');
       if (free !== -1) setDay(free, { ...days[free], dayType: 'strength' });
     } else {
-      const next = Math.max(-1, ...days.map(d => d.dayIndex ?? -1)) + 1;
-      setDays([...days, newPlanDay({ dayIndex: next, dayType: 'strength' })]);
+      // Inside the program's own weeks, not as "Day 29" after them: the first
+      // rest day with a rest day before it (so days alternate), else the
+      // first rest day at all. Only a full program grows by one more day.
+      const order = days.map((_, i) => i).sort((a, b) => (days[a].dayIndex ?? 0) - (days[b].dayIndex ?? 0));
+      const isRest = position => days[order[position]].dayType === 'rest';
+      const rests = order.map((_, position) => position).filter(isRest);
+      const position = rests.find(p => p === 0 || isRest(p - 1)) ?? rests[0];
+      if (position != null) {
+        setDay(order[position], { ...days[order[position]], dayType: 'strength' });
+      } else {
+        const next = Math.max(-1, ...days.map(d => d.dayIndex ?? -1)) + 1;
+        setDays([...days, newPlanDay({ dayIndex: next, dayType: 'strength' })]);
+      }
     }
   };
 
-  const removeTrainingDay = index => {
-    if (planMode === 'weeklyCycle') setDay(index, { ...days[index], dayType: 'rest', blocks: [] });
-    else setDays(days.filter((_, i) => i !== index));
-  };
+  // Back to a rest day in both modes. (Removing the entry from a program
+  // would leave a hole in its days — a day the app has no answer for.)
+  const removeTrainingDay = index => setDay(index, { ...days[index], dayType: 'rest', blocks: [] });
 
   const save = () => {
     if (!isValid) return;
     const plan = newPlan({
-      name: name.trim(), planMode, days, progressionEnabled: progression,
+      name: name.trim(), planMode, days, progressionEnabled: progression, isCustom: true,
       // Editing keeps the plan's identity and its pause history.
       ...(editing && {
         id: editing.id,
@@ -150,6 +198,7 @@ export function CreatePlanSheet({ editing = null, onClose }) {
     });
     if (editing) store.updatePlan(plan); else store.addPlan(plan);
     onClose();
+    if (!editing) onCreated?.(plan);
   };
 
   const typeCard = (icon, color, title, subtitle, onClick) => html`
@@ -178,6 +227,8 @@ export function CreatePlanSheet({ editing = null, onClose }) {
     </div>`;
 
   const trainingIndexes = days.map((_, i) => i).filter(i => days[i].dayType !== 'rest');
+  // A week has seven days; a program can always grow by one more.
+  const canAddDay = planMode !== 'weeklyCycle' || days.some(d => d.dayType === 'rest');
 
   const form = html`<div class="form">
     <div class="form-section">
@@ -216,9 +267,11 @@ export function CreatePlanSheet({ editing = null, onClose }) {
             </button>
           </div>`;
         })}
-        <button class="btn-soft tall" onClick=${addTrainingDay}>
-          <${Icon} name="plus-circle-fill" size=${18} />Add Training Day
-        </button>
+        ${canAddDay
+          ? html`<button class="btn-soft tall" onClick=${addTrainingDay}>
+              <${Icon} name="plus-circle-fill" size=${18} />Add Training Day
+            </button>`
+          : html`<p class="mono t-caption2 c-subtle center">Every day of the week is a training day.</p>`}
       </div>
     </div>
 
@@ -247,7 +300,7 @@ export function CreatePlanSheet({ editing = null, onClose }) {
           <button class="list-row" style="flex-direction:column;align-items:flex-start;gap:4px"
             onClick=${() => { setShowTemplates(false); start(template.planMode, template.days, `${template.name} (Custom)`); }}>
             <span class="medium">${template.name}</span>
-            <span class="mono t-caption c-subtle">${modeName(template)}</span>
+            <span class="mono t-caption c-subtle">${planFacts(template)}</span>
           </button>`)}
       </div></div>
     <//>`}

@@ -1,0 +1,1267 @@
+[
+ {
+  "slug": "exercise-squat",
+  "prompt": "a person seen from the side in a deep bodyweight squat, thighs parallel to the floor, back straight, arms held straight out in front",
+  "muscles": "the quadriceps on the front of the thighs and the glutes"
+ },
+ {
+  "slug": "exercise-deadlift",
+  "prompt": "exactly one person seen from the side, bent forward at the hips with a flat back and bent knees, both arms straight down gripping a barbell with large round plates that rests on the floor",
+  "muscles": "the glutes, the hamstrings on the back of the thighs and the lower back muscles along the spine"
+ },
+ {
+  "slug": "exercise-bench-press",
+  "prompt": "a person seen from the side lying on their back on a flat bench, pressing a barbell with round plates straight up above the chest with both arms",
+  "muscles": "the chest muscles, the shoulder muscles (deltoids) and the triceps on the back of the upper arms"
+ },
+ {
+  "slug": "exercise-pull-up",
+  "prompt": "a person seen from behind hanging from a horizontal bar with both hands, pulled up so the chin is above the bar, elbows bent, legs hanging straight",
+  "muscles": "the latissimus dorsi on the sides of the back and the biceps on the front of the upper arms"
+ },
+ {
+  "slug": "exercise-overhead-press",
+  "prompt": "a person seen from the front standing upright, holding a barbell with round plates locked out overhead with both arms straight",
+  "muscles": "the shoulder muscles (deltoids) and the triceps on the back of the upper arms"
+ },
+ {
+  "slug": "exercise-plank",
+  "prompt": "a person seen from the side holding a forearm plank, forearms and toes on the floor, body in one straight line from head to heels",
+  "muscles": "the abdominal muscles"
+ },
+ {
+  "slug": "exercise-push-up",
+  "prompt": "a person seen from the side in a push-up position on the floor, body straight from head to heels, arms bent at about 90 degrees with the chest close to the floor",
+  "muscles": "the chest muscles, the triceps on the back of the upper arms and the shoulder muscles (deltoids)"
+ },
+ {
+  "slug": "exercise-lunge",
+  "prompt": "a person seen from the side in a deep forward lunge, front knee bent at 90 degrees, back knee just above the floor, torso upright, hands on hips",
+  "muscles": "the quadriceps on the front of the thighs and the glutes"
+ },
+ {
+  "slug": "exercise-glute-bridge",
+  "prompt": "a person seen from the side lying on their back with knees bent and feet flat on the floor, hips lifted high so the body is a straight line from shoulders to knees",
+  "muscles": "the glutes and the hamstrings on the back of the thighs"
+ },
+ {
+  "slug": "exercise-dumbbell-rows",
+  "prompt": "a person seen from the side bent forward with one hand and one knee on a flat bench, pulling a dumbbell up to the hip with the other arm, elbow pointing up",
+  "muscles": "the latissimus dorsi on the sides of the back, the upper back between the shoulder blades (trapezius and rhomboids) and the biceps on the front of the upper arms"
+ },
+ {
+  "slug": "exercise-dumbbell-overhead-press",
+  "prompt": "a person seen from the front standing upright pressing two dumbbells overhead, one in each hand, arms almost straight",
+  "muscles": "the shoulder muscles (deltoids) and the triceps on the back of the upper arms"
+ },
+ {
+  "slug": "exercise-dumbbell-floor-press",
+  "prompt": "a person seen from the side lying on their back on the floor with knees bent, pressing two dumbbells straight up above the chest",
+  "muscles": "the chest muscles and the triceps on the back of the upper arms"
+ },
+ {
+  "slug": "exercise-dumbbell-bicep-curls",
+  "prompt": "a person seen from the side standing upright, upper arm against the body, forearm curled up holding a dumbbell at shoulder height",
+  "muscles": "the biceps on the front of the upper arms"
+ },
+ {
+  "slug": "exercise-dumbbell-romanian-deadlift",
+  "prompt": "a person seen from the side hinged forward at the hips with a flat back and almost straight legs, holding two dumbbells hanging in front of the shins",
+  "muscles": "the hamstrings on the back of the thighs, the glutes and the lower back muscles along the spine"
+ },
+ {
+  "slug": "exercise-tricep-dips",
+  "prompt": "a person seen from the side with hands on the edge of a bench behind them, hips lowered in front of the bench, elbows bent backwards, legs stretched out in front with heels on the floor",
+  "muscles": "the triceps on the back of the upper arms and the shoulder muscles (deltoids)"
+ },
+ {
+  "slug": "exercise-reverse-lunges",
+  "prompt": "a person seen from the side stepping one leg far backwards into a lunge, back knee near the floor, front shin vertical, arms bent at the sides",
+  "muscles": "the quadriceps on the front of the thighs and the glutes"
+ },
+ {
+  "slug": "exercise-calf-raises",
+  "prompt": "a person seen from the side standing tall on tiptoe with both heels lifted high off the floor, arms at the sides",
+  "muscles": "the calves"
+ },
+ {
+  "slug": "exercise-side-plank",
+  "prompt": "a person seen from the front in a side plank, propped on one forearm with the body in a straight diagonal line, feet stacked, top arm reaching straight up",
+  "muscles": "the obliques on the sides of the waist"
+ },
+ {
+  "slug": "exercise-burpee",
+  "prompt": "a person seen from the side jumping straight up off the floor with arms stretched overhead and legs straight, body fully extended",
+  "muscles": "the quadriceps on the front of the thighs, the chest muscles and the shoulder muscles (deltoids)"
+ },
+ {
+  "slug": "exercise-jumping-jacks",
+  "prompt": "a person seen from the front in mid jumping jack, legs spread wide and both arms raised out and up above the head",
+  "muscles": "the shoulder muscles (deltoids) and the calves"
+ },
+ {
+  "slug": "exercise-plank-jacks",
+  "prompt": "a person seen from the front in a high plank on straight arms with the feet jumped wide apart",
+  "muscles": "the abdominal muscles and the outer hips (gluteus medius)"
+ },
+ {
+  "slug": "exercise-inchworms",
+  "prompt": "a person seen from the side folded forward with legs straight and hands on the floor walked out in front, hips high, halfway between standing and a plank",
+  "muscles": "the abdominal muscles, the shoulder muscles (deltoids) and the hamstrings on the back of the thighs"
+ },
+ {
+  "slug": "exercise-sit-up",
+  "prompt": "a person seen from the side sitting up from the floor with knees bent and feet flat, torso halfway up, hands beside the head",
+  "muscles": "the abdominal muscles"
+ },
+ {
+  "slug": "exercise-bicycle-crunches",
+  "prompt": "a person seen from the side lying on their back with shoulders lifted, one knee pulled toward the opposite elbow and the other leg extended just above the floor",
+  "muscles": "the abdominal muscles and the obliques on the sides of the waist"
+ },
+ {
+  "slug": "exercise-superman",
+  "prompt": "a person seen from the side lying face down on the floor with both arms stretched forward and both legs lifted off the floor, chest raised",
+  "muscles": "the lower back muscles along the spine and the glutes"
+ },
+ {
+  "slug": "exercise-bird-dog",
+  "prompt": "a person seen from the side on hands and knees with one arm stretched straight forward and the opposite leg stretched straight back, both level with the back",
+  "muscles": "the lower back muscles along the spine, the glutes and the shoulder muscles (deltoids)"
+ },
+ {
+  "slug": "exercise-russian-twists",
+  "prompt": "a person seen from the side sitting on the floor leaning back with knees bent and feet lifted, torso twisted with both hands clasped beside one hip",
+  "muscles": "the obliques on the sides of the waist and the abdominal muscles"
+ },
+ {
+  "slug": "exercise-glute-bridge-march",
+  "prompt": "a person seen from the side lying on their back in a raised glute bridge with one foot on the floor and the other knee lifted toward the chest",
+  "muscles": "the glutes and the hamstrings on the back of the thighs"
+ },
+ {
+  "slug": "exercise-hip-flexor-stretch",
+  "prompt": "a person seen from the side kneeling on one knee in a half-kneeling lunge, hips pushed forward, torso upright, both arms raised overhead",
+  "muscles": "the hip flexors at the front of the hips"
+ },
+ {
+  "slug": "exercise-cat-cow",
+  "prompt": "a person seen from the side on hands and knees with the back rounded up high toward the ceiling and the head dropped",
+  "muscles": "the lower back muscles along the spine and the abdominal muscles"
+ },
+ {
+  "slug": "exercise-running",
+  "prompt": "a person seen from the side running fast, one knee driven forward and high, the other leg extended behind, arms bent and pumping",
+  "muscles": "the quadriceps on the front of the thighs, the hamstrings on the back of the thighs and the calves"
+ },
+ {
+  "slug": "exercise-cycling",
+  "prompt": "a person seen from the side riding a bicycle, leaning forward with hands on the handlebars and one leg extended on the pedal",
+  "muscles": "the quadriceps on the front of the thighs, the glutes and the calves"
+ },
+ {
+  "slug": "exercise-jump-rope",
+  "prompt": "a person seen from the front jumping with both feet off the floor while swinging a skipping rope that arcs over the head and under the feet",
+  "muscles": "the calves and the shoulder muscles (deltoids)"
+ },
+ {
+  "slug": "exercise-incline-push-up",
+  "prompt": "a person seen from the side in a straight-body plank with hands on the edge of a bench and feet on the floor, elbows bent so the chest is close to the bench",
+  "muscles": "the chest muscles and the triceps on the back of the upper arms"
+ },
+ {
+  "slug": "exercise-wide-push-up",
+  "prompt": "a person seen from the front in a push-up position with hands placed far wider than the shoulders, elbows bent out to the sides and chest low to the floor",
+  "muscles": "the chest muscles and the shoulder muscles (deltoids)"
+ },
+ {
+  "slug": "exercise-decline-push-up",
+  "prompt": "a person seen from the side in a push-up position with toes resting on a bench behind them and hands on the floor, body in a straight line sloping down towards the head, elbows bent",
+  "muscles": "the chest muscles, the shoulder muscles (deltoids) and the triceps on the back of the upper arms"
+ },
+ {
+  "slug": "exercise-diamond-push-up",
+  "prompt": "one person seen from the front and slightly above in a push-up position, hands together under the chest with thumbs and index fingers touching in a diamond shape, elbows bent",
+  "muscles": "the triceps on the back of the upper arms and the chest muscles"
+ },
+ {
+  "slug": "exercise-pike-push-up",
+  "prompt": "a person seen from the side in an inverted V with hips high, hands and feet on the floor, elbows bent and the top of the head lowered close to the floor in front of the hands",
+  "muscles": "the shoulder muscles (deltoids) and the triceps on the back of the upper arms"
+ },
+ {
+  "slug": "exercise-archer-push-up",
+  "prompt": "one person seen from the front in a wide push-up, body shifted over one bent arm while the other arm is stretched straight out to the side",
+  "muscles": "the chest muscles and the triceps on the back of the upper arms"
+ },
+ {
+  "slug": "exercise-pseudo-planche-push-up",
+  "prompt": "a person seen from the side low in a push-up with hands on the floor beside the waist, shoulders leaning far forward past the hands, elbows tucked in and body in a straight line on the toes",
+  "muscles": "the shoulder muscles (deltoids) and the chest muscles"
+ },
+ {
+  "slug": "exercise-wall-handstand-push-up",
+  "prompt": "a person upside down in a handstand seen from the side with heels resting against a wall, elbows bent so the top of the head is just above the floor slightly in front of the hands",
+  "muscles": "the shoulder muscles (deltoids) and the triceps on the back of the upper arms"
+ },
+ {
+  "slug": "exercise-parallel-bar-dip",
+  "prompt": "a person seen from the side supporting their body between two parallel bars, elbows bent to about 90 degrees behind them, torso leaning slightly forward and knees bent with feet off the ground",
+  "muscles": "the chest muscles, the triceps on the back of the upper arms and the shoulder muscles (deltoids)"
+ },
+ {
+  "slug": "exercise-dead-hang",
+  "prompt": "a person seen from behind hanging from a horizontal bar with straight arms, hands shoulder-width apart, body and legs hanging straight down with feet off the ground",
+  "muscles": "the forearms and the latissimus dorsi on the sides of the back"
+ },
+ {
+  "slug": "exercise-scapular-pull-up",
+  "prompt": "a person seen from behind hanging from a horizontal bar with arms completely straight, shoulders pulled down away from the ears and chest lifted slightly towards the bar",
+  "muscles": "the upper back between the shoulder blades (trapezius and rhomboids) and the latissimus dorsi on the sides of the back"
+ },
+ {
+  "slug": "exercise-negative-pull-up",
+  "prompt": "a person seen from the side holding the top of a pull-up with chin above a horizontal bar and elbows fully bent, feet hanging just above a box placed underneath",
+  "muscles": "the latissimus dorsi on the sides of the back and the biceps on the front of the upper arms"
+ },
+ {
+  "slug": "exercise-inverted-row",
+  "prompt": "a person seen from the side hanging underneath a waist-high horizontal bar with a straight body facing upwards, heels on the floor, elbows bent and chest pulled up to the bar",
+  "muscles": "the upper back between the shoulder blades (trapezius and rhomboids), the latissimus dorsi on the sides of the back and the biceps on the front of the upper arms"
+ },
+ {
+  "slug": "exercise-chin-up",
+  "prompt": "a person seen from the front at the top of a chin-up with palms facing towards them on a horizontal bar, hands shoulder-width apart, chin above the bar and elbows pointing down",
+  "muscles": "the biceps on the front of the upper arms and the latissimus dorsi on the sides of the back"
+ },
+ {
+  "slug": "exercise-wide-grip-pull-up",
+  "prompt": "a person seen from behind at the top of a pull-up with hands placed far wider than the shoulders on a horizontal bar, palms facing away, elbows pointing out to the sides and chin above the bar",
+  "muscles": "the latissimus dorsi on the sides of the back"
+ },
+ {
+  "slug": "exercise-close-grip-pull-up",
+  "prompt": "a person seen from behind at the top of a pull-up with both hands close together in the middle of a horizontal bar, palms facing away, elbows pointing forward and down and chin above the bar",
+  "muscles": "the latissimus dorsi on the sides of the back and the biceps on the front of the upper arms"
+ },
+ {
+  "slug": "exercise-archer-pull-up",
+  "prompt": "a person seen from behind at the top of a pull-up with a very wide grip, chin above the bar next to one bent arm while the other arm is stretched straight out along the bar",
+  "muscles": "the latissimus dorsi on the sides of the back and the biceps on the front of the upper arms"
+ },
+ {
+  "slug": "exercise-muscle-up",
+  "prompt": "a person seen from the side supported above a horizontal bar on straight arms, hands gripping the bar at hip height, torso upright and leaning slightly forward with legs hanging straight below the bar",
+  "muscles": "the latissimus dorsi on the sides of the back, the chest muscles and the triceps on the back of the upper arms"
+ },
+ {
+  "slug": "exercise-split-squat",
+  "prompt": "a person seen from the side in a staggered stance with one foot forward and one back, both knees bent to about 90 degrees, back knee just above the floor and torso upright",
+  "muscles": "the quadriceps on the front of the thighs and the glutes"
+ },
+ {
+  "slug": "exercise-step-up",
+  "prompt": "a person seen from the side with one foot planted on top of a knee-high box and that knee bent, the other foot still on the floor behind, torso leaning slightly forward",
+  "muscles": "the quadriceps on the front of the thighs and the glutes"
+ },
+ {
+  "slug": "exercise-wall-sit",
+  "prompt": "a person seen from the side sitting as if on an invisible chair with their back flat against a wall, thighs parallel to the floor, knees bent at 90 degrees and arms hanging by the sides",
+  "muscles": "the quadriceps on the front of the thighs"
+ },
+ {
+  "slug": "exercise-single-leg-calf-raise",
+  "prompt": "one person seen from the side standing on the toes of one foot on the edge of a low step, heel raised, the other foot lifted behind, one hand on a wall for balance",
+  "muscles": "the calves"
+ },
+ {
+  "slug": "exercise-jump-squat",
+  "prompt": "a person seen from the side in mid-air jumping straight up, legs extended with toes pointing down and feet clear of the floor, arms reaching up overhead",
+  "muscles": "the quadriceps on the front of the thighs, the glutes and the calves"
+ },
+ {
+  "slug": "exercise-single-leg-glute-bridge",
+  "prompt": "a person seen from the side lying on their upper back with hips lifted high, one foot planted on the floor with the knee bent and the other leg extended straight in line with the thigh",
+  "muscles": "the glutes and the hamstrings on the back of the thighs"
+ },
+ {
+  "slug": "exercise-bulgarian-split-squat",
+  "prompt": "a person seen from the side in a deep single-leg squat with the back foot resting on a bench behind them, front thigh parallel to the floor and torso leaning slightly forward",
+  "muscles": "the quadriceps on the front of the thighs and the glutes"
+ },
+ {
+  "slug": "exercise-cossack-squat",
+  "prompt": "a person seen from the front in a deep side squat with one knee fully bent and heel flat on the floor, the other leg stretched straight out to the side with toes pointing up, arms reaching forward",
+  "muscles": "the quadriceps on the front of the thighs, the inner thighs (adductors) and the glutes"
+ },
+ {
+  "slug": "exercise-assisted-pistol-squat",
+  "prompt": "a person seen from the side in a deep one-legged squat with the other leg held straight out in front, both hands holding a vertical post in front of them",
+  "muscles": "the quadriceps on the front of the thighs and the glutes"
+ },
+ {
+  "slug": "exercise-pistol-squat",
+  "prompt": "a person seen from the side at the bottom of a one-legged squat, hips close to the heel of the standing foot, the other leg stretched straight out in front above the floor and both arms reaching forward",
+  "muscles": "the quadriceps on the front of the thighs and the glutes"
+ },
+ {
+  "slug": "exercise-shrimp-squat",
+  "prompt": "a person seen from the side balancing low on one bent leg with the other knee touching the floor behind, that rear foot held up at the buttock by one hand, torso leaning forward and the other arm reaching forward",
+  "muscles": "the quadriceps on the front of the thighs and the glutes"
+ },
+ {
+  "slug": "exercise-nordic-curl",
+  "prompt": "a person seen from the side kneeling on a mat with ankles held down behind them, body in a straight line from knees to head leaning forward at about 45 degrees, hands held ready in front of the chest",
+  "muscles": "the hamstrings on the back of the thighs"
+ },
+ {
+  "slug": "exercise-hollow-hold",
+  "prompt": "a person seen from the side lying on their lower back in a shallow banana shape, arms stretched overhead and straight legs both raised slightly off the floor, shoulders lifted",
+  "muscles": "the abdominal muscles"
+ },
+ {
+  "slug": "exercise-lying-leg-raise",
+  "prompt": "a person seen from the side lying flat on their back with arms by their sides and both straight legs raised together to about 45 degrees above the floor",
+  "muscles": "the abdominal muscles and the hip flexors at the front of the hips"
+ },
+ {
+  "slug": "exercise-v-up",
+  "prompt": "a person seen from the side balanced on their seat with the body folded into a V shape, straight legs raised and straight arms reaching towards the toes",
+  "muscles": "the abdominal muscles and the hip flexors at the front of the hips"
+ },
+ {
+  "slug": "exercise-hand-walkout",
+  "prompt": "a person seen from the side stretched out long and low over the floor, supported on the knees and on straight arms with hands placed far in front of the head, hips low and back flat",
+  "muscles": "the abdominal muscles and the shoulder muscles (deltoids)"
+ },
+ {
+  "slug": "exercise-hanging-knee-raise",
+  "prompt": "a person seen from the side hanging from a horizontal bar with straight arms, knees bent and pulled up to hip height in front of the body",
+  "muscles": "the abdominal muscles and the hip flexors at the front of the hips"
+ },
+ {
+  "slug": "exercise-hanging-leg-raise",
+  "prompt": "a person seen from the side hanging from a horizontal bar with straight arms and both straight legs raised horizontally in front, the body forming an L shape",
+  "muscles": "the abdominal muscles and the hip flexors at the front of the hips"
+ },
+ {
+  "slug": "exercise-toes-to-bar",
+  "prompt": "one person seen from the side hanging from a horizontal bar with straight arms, body folded in half so the straight legs point up and the feet touch the bar",
+  "muscles": "the abdominal muscles, the hip flexors at the front of the hips and the latissimus dorsi on the sides of the back"
+ },
+ {
+  "slug": "exercise-l-sit",
+  "prompt": "one person seen from the side holding themselves up on two straight arms with the hands on low parallel bars, hips off the ground, both legs held together straight out in front and horizontal, forming an L",
+  "muscles": "the abdominal muscles, the hip flexors at the front of the hips and the triceps on the back of the upper arms"
+ },
+ {
+  "slug": "exercise-dragon-flag",
+  "prompt": "a person seen from the side lying with only their upper back on a bench, hands gripping the bench behind the head, the rest of the body held rigid and straight at about 30 degrees above the bench",
+  "muscles": "the abdominal muscles"
+ },
+ {
+  "slug": "exercise-frog-stand",
+  "prompt": "a person seen from the side balancing on their hands in a tight crouch, elbows bent with knees resting on the backs of the upper arms, feet off the floor and head forward of the hands",
+  "muscles": "the shoulder muscles (deltoids), the forearms and the abdominal muscles"
+ },
+ {
+  "slug": "exercise-wall-handstand",
+  "prompt": "a person upside down in a straight handstand seen from the side, chest facing a wall with toes touching it, arms locked straight and hands on the floor a short distance from the wall",
+  "muscles": "the shoulder muscles (deltoids)"
+ },
+ {
+  "slug": "exercise-handstand-hold",
+  "prompt": "a person seen from the side balancing upside down in a free handstand with no wall, arms locked straight and the body in one vertical line from hands to pointed toes",
+  "muscles": "the shoulder muscles (deltoids)"
+ },
+ {
+  "slug": "exercise-tuck-planche",
+  "prompt": "a person seen from the side balancing on straight arms with hands on the floor, shoulders leaning forward of the hands, back rounded and level, knees tucked tight to the chest with feet off the floor",
+  "muscles": "the shoulder muscles (deltoids) and the abdominal muscles"
+ },
+ {
+  "slug": "exercise-tuck-front-lever",
+  "prompt": "a person seen from the side hanging below a horizontal bar with straight arms, torso horizontal with the chest facing up, knees tucked tightly to the chest",
+  "muscles": "the latissimus dorsi on the sides of the back and the abdominal muscles"
+ },
+ {
+  "slug": "exercise-back-lever",
+  "prompt": "a person seen from the side hanging below a horizontal bar with straight arms reaching behind their back, body held straight and horizontal with the chest facing the floor",
+  "muscles": "the latissimus dorsi on the sides of the back and the shoulder muscles (deltoids)"
+ },
+ {
+  "slug": "exercise-mountain-climbers",
+  "prompt": "a person in a high plank driving one knee toward the chest while the other leg is extended straight behind",
+  "muscles": "the abdominal muscles, the hip flexors at the front of the hips and the shoulder muscles (deltoids)"
+ },
+ {
+  "slug": "exercise-cross-body-mountain-climbers",
+  "prompt": "a person in a high plank seen from the front, drawing the right knee diagonally under the body toward the left elbow",
+  "muscles": "the obliques on the sides of the waist and the abdominal muscles"
+ },
+ {
+  "slug": "exercise-high-knees",
+  "prompt": "a person standing upright running on the spot with one knee lifted to hip height and the opposite arm bent forward",
+  "muscles": "the hip flexors at the front of the hips, the quadriceps on the front of the thighs and the calves"
+ },
+ {
+  "slug": "exercise-butt-kicks",
+  "prompt": "a person jogging on the spot seen from the side with one heel kicked up behind to touch the buttock and the thigh pointing straight down",
+  "muscles": "the hamstrings on the back of the thighs and the calves"
+ },
+ {
+  "slug": "exercise-skaters",
+  "prompt": "a person seen from the front balanced on one bent leg with the other leg swept diagonally behind and the opposite hand reaching toward the standing foot",
+  "muscles": "the glutes, the quadriceps on the front of the thighs and the outer hips (gluteus medius)"
+ },
+ {
+  "slug": "exercise-squat-thrust",
+  "prompt": "a person crouched with both hands planted on the floor and both feet in mid-air kicking back toward a plank position",
+  "muscles": "the quadriceps on the front of the thighs, the abdominal muscles and the shoulder muscles (deltoids)"
+ },
+ {
+  "slug": "exercise-tuck-jump",
+  "prompt": "a person in mid-air with both knees tucked up to the chest and hands reaching toward the knees",
+  "muscles": "the quadriceps on the front of the thighs, the calves and the abdominal muscles"
+ },
+ {
+  "slug": "exercise-star-jump",
+  "prompt": "a person seen from the front in mid-air with arms and legs spread wide in an X shape",
+  "muscles": "the quadriceps on the front of the thighs, the calves and the shoulder muscles (deltoids)"
+ },
+ {
+  "slug": "exercise-broad-jump",
+  "prompt": "a person leaping forward in mid-air with both arms swung ahead and both legs reaching forward to land",
+  "muscles": "the quadriceps on the front of the thighs, the glutes and the calves"
+ },
+ {
+  "slug": "exercise-lateral-shuffle",
+  "prompt": "a person seen from the front in a low half squat stepping sideways with feet wide apart and hands held in front of the chest",
+  "muscles": "the quadriceps on the front of the thighs and the outer hips (gluteus medius)"
+ },
+ {
+  "slug": "exercise-fast-feet",
+  "prompt": "a person in a slight squat on the balls of the feet with one foot just off the floor and arms bent at the sides",
+  "muscles": "the calves and the quadriceps on the front of the thighs"
+ },
+ {
+  "slug": "exercise-bear-crawl",
+  "prompt": "a person on hands and feet with a flat back and knees hovering just above the floor, one hand and the opposite foot stepping forward",
+  "muscles": "the shoulder muscles (deltoids), the quadriceps on the front of the thighs and the abdominal muscles"
+ },
+ {
+  "slug": "exercise-crab-walk",
+  "prompt": "one person seen from the side in a reverse tabletop: facing up with hands and feet on the floor, hips lifted, knees bent",
+  "muscles": "the triceps on the back of the upper arms, the shoulder muscles (deltoids) and the glutes"
+ },
+ {
+  "slug": "exercise-plank-shoulder-taps",
+  "prompt": "a person in a high plank with feet apart, supporting on one straight arm while the other hand touches the opposite shoulder",
+  "muscles": "the abdominal muscles and the shoulder muscles (deltoids)"
+ },
+ {
+  "slug": "exercise-up-down-plank",
+  "prompt": "a person in a plank with one forearm flat on the floor and the other arm straight with the hand planted, halfway between a forearm plank and a high plank",
+  "muscles": "the triceps on the back of the upper arms, the shoulder muscles (deltoids) and the abdominal muscles"
+ },
+ {
+  "slug": "exercise-sprawl",
+  "prompt": "a person with straight arms planted on the floor, hips dropped low near the floor, chest lifted and legs stretched out wide behind",
+  "muscles": "the quadriceps on the front of the thighs, the chest muscles and the abdominal muscles"
+ },
+ {
+  "slug": "exercise-box-jump",
+  "prompt": "a person landing in a half squat with both feet on top of a knee-high box, arms swung forward",
+  "muscles": "the quadriceps on the front of the thighs, the glutes and the calves"
+ },
+ {
+  "slug": "exercise-jumping-lunges",
+  "prompt": "a person in mid-air in a split stance with one leg forward and one leg back, both knees bent, arms pumping as in running",
+  "muscles": "the quadriceps on the front of the thighs and the glutes"
+ },
+ {
+  "slug": "exercise-pop-squat",
+  "prompt": "a person seen from the front in a wide squat with one hand touching the floor between the feet and the other arm raised behind",
+  "muscles": "the quadriceps on the front of the thighs and the glutes"
+ },
+ {
+  "slug": "exercise-frog-jump",
+  "prompt": "a person in a deep wide squat with heels down and fingertips touching the floor between the feet, about to spring forward",
+  "muscles": "the quadriceps on the front of the thighs, the glutes and the calves"
+ },
+ {
+  "slug": "exercise-seal-jacks",
+  "prompt": "a person seen from the front with feet jumped wide apart and both arms stretched straight out to the sides at shoulder height",
+  "muscles": "the chest muscles and the shoulder muscles (deltoids)"
+ },
+ {
+  "slug": "exercise-flutter-kicks",
+  "prompt": "a person lying on the back with both legs straight and raised slightly off the floor, one leg a little higher than the other",
+  "muscles": "the abdominal muscles and the hip flexors at the front of the hips"
+ },
+ {
+  "slug": "exercise-kettlebell-swing",
+  "prompt": "a person standing tall holding a kettlebell with both straight arms out in front at chest height, legs straight and hips fully extended",
+  "muscles": "the glutes and the hamstrings on the back of the thighs"
+ },
+ {
+  "slug": "exercise-dumbbell-thruster",
+  "prompt": "a person at the bottom of a squat holding a dumbbell at each shoulder with elbows pointing forward",
+  "muscles": "the quadriceps on the front of the thighs, the glutes and the shoulder muscles (deltoids)"
+ },
+ {
+  "slug": "exercise-man-maker",
+  "prompt": "a person in a high plank gripping two dumbbells on the floor, rowing one dumbbell up to the ribs while balancing on the other",
+  "muscles": "the chest muscles, the latissimus dorsi on the sides of the back, the shoulder muscles (deltoids) and the quadriceps on the front of the thighs"
+ },
+ {
+  "slug": "exercise-dumbbell-snatch",
+  "prompt": "a person standing tall with one arm locked out straight overhead holding a dumbbell and the other arm out to the side for balance",
+  "muscles": "the shoulder muscles (deltoids), the glutes and the hamstrings on the back of the thighs"
+ },
+ {
+  "slug": "exercise-wall-ball",
+  "prompt": "a person in a deep squat facing a wall, holding a large medicine ball at chin height with elbows tucked under it",
+  "muscles": "the quadriceps on the front of the thighs, the glutes and the shoulder muscles (deltoids)"
+ },
+ {
+  "slug": "exercise-ball-slam",
+  "prompt": "a person standing on tiptoes with arms fully extended overhead holding a heavy ball, about to throw it down at the floor",
+  "muscles": "the abdominal muscles, the latissimus dorsi on the sides of the back and the shoulder muscles (deltoids)"
+ },
+ {
+  "slug": "exercise-battle-rope-waves",
+  "prompt": "a person in a half squat holding a thick rope end in each hand, one arm raised and one lowered, with waves travelling along the two ropes to an anchor",
+  "muscles": "the shoulder muscles (deltoids) and the forearms"
+ },
+ {
+  "slug": "exercise-sled-push",
+  "prompt": "one person seen from the side leaning forward at 45 degrees, straight arms pushing the upright handles of a weighted sled along the floor, legs driving",
+  "muscles": "the quadriceps on the front of the thighs, the glutes and the calves"
+ },
+ {
+  "slug": "exercise-shadow-boxing",
+  "prompt": "a person in a boxing stance with one foot forward, the lead arm punching straight out at shoulder height and the rear fist held by the chin",
+  "muscles": "the shoulder muscles (deltoids) and the obliques on the sides of the waist"
+ },
+ {
+  "slug": "exercise-heavy-bag-combinations",
+  "prompt": "a person wearing boxing gloves in a boxing stance landing a straight punch on a hanging heavy bag, with the other glove guarding the chin",
+  "muscles": "the shoulder muscles (deltoids), the obliques on the sides of the waist and the chest muscles"
+ },
+ {
+  "slug": "exercise-shuttle-run",
+  "prompt": "exactly one person seen from the side in a low sprint turn, crouching and reaching one hand down to touch a line on the floor",
+  "muscles": "the quadriceps on the front of the thighs, the hamstrings on the back of the thighs and the calves"
+ },
+ {
+  "slug": "exercise-sprint",
+  "prompt": "a person sprinting with a forward lean, front knee driven high, rear leg fully extended behind and arms bent at right angles pumping",
+  "muscles": "the quadriceps on the front of the thighs, the hamstrings on the back of the thighs, the glutes and the calves"
+ },
+ {
+  "slug": "exercise-stair-sprint",
+  "prompt": "a person running up a flight of stairs with one knee lifted high onto the next step, body leaning forward and arms pumping",
+  "muscles": "the quadriceps on the front of the thighs, the glutes and the calves"
+ },
+ {
+  "slug": "exercise-walking",
+  "prompt": "a person walking upright with a long stride, heel of the front foot touching the ground and arms swinging in opposition",
+  "muscles": "the quadriceps on the front of the thighs, the calves and the glutes"
+ },
+ {
+  "slug": "exercise-hiking",
+  "prompt": "a person walking uphill on a sloping trail wearing a small rucksack, leaning slightly forward with one foot stepping up",
+  "muscles": "the quadriceps on the front of the thighs, the glutes and the calves"
+ },
+ {
+  "slug": "exercise-incline-treadmill-walk",
+  "prompt": "a person walking up a treadmill whose belt is tilted upward, arms swinging freely and body leaning slightly forward",
+  "muscles": "the glutes, the hamstrings on the back of the thighs and the calves"
+ },
+ {
+  "slug": "exercise-indoor-rowing",
+  "prompt": "a person seated on a rowing machine with legs extended, leaning back slightly and pulling the handle to the lower ribs",
+  "muscles": "the latissimus dorsi on the sides of the back, the quadriceps on the front of the thighs and the upper back between the shoulder blades (trapezius and rhomboids)"
+ },
+ {
+  "slug": "exercise-swimming",
+  "prompt": "a person swimming front crawl at the water surface, one arm reaching forward, the other pulling back and legs kicking",
+  "muscles": "the latissimus dorsi on the sides of the back and the shoulder muscles (deltoids)"
+ },
+ {
+  "slug": "exercise-elliptical-trainer",
+  "prompt": "a person standing upright on an elliptical trainer with one foot forward on a pedal and hands gripping the two tall moving handles",
+  "muscles": "the quadriceps on the front of the thighs and the glutes"
+ },
+ {
+  "slug": "exercise-stair-climber",
+  "prompt": "a person climbing a stair climber machine with one foot on a higher step, standing upright with hands resting lightly on the side rails",
+  "muscles": "the quadriceps on the front of the thighs, the glutes and the calves"
+ },
+ {
+  "slug": "exercise-indoor-cycling",
+  "prompt": "a person riding a stationary exercise bike, leaning forward with hands on the handlebars and one leg extended at the bottom of the pedal stroke",
+  "muscles": "the quadriceps on the front of the thighs and the glutes"
+ },
+ {
+  "slug": "exercise-cross-country-skiing",
+  "prompt": "a person on long narrow skis in a diagonal stride, one leg gliding forward, the other extended behind, with one ski pole planted and the other arm swung back",
+  "muscles": "the latissimus dorsi on the sides of the back, the triceps on the back of the upper arms and the quadriceps on the front of the thighs"
+ },
+ {
+  "slug": "exercise-ski-ergometer",
+  "prompt": "a person standing facing a tall upright machine, hinged forward at the hips with knees slightly bent and both hands pulling cord handles down past the thighs",
+  "muscles": "the latissimus dorsi on the sides of the back, the triceps on the back of the upper arms and the abdominal muscles"
+ },
+ {
+  "slug": "exercise-air-bike",
+  "prompt": "a person seated on an exercise bike with a large fan wheel at the front, pedalling while pushing one tall handle forward and pulling the other back",
+  "muscles": "the quadriceps on the front of the thighs and the shoulder muscles (deltoids)"
+ },
+ {
+  "slug": "exercise-run-walk-intervals",
+  "prompt": "a person jogging at an easy pace with a short stride, upright posture and arms bent at the sides",
+  "muscles": "the quadriceps on the front of the thighs and the calves"
+ },
+ {
+  "slug": "exercise-trail-running",
+  "prompt": "a person running along an uneven forest path, stepping over a root with a short stride and arms held slightly out for balance",
+  "muscles": "the quadriceps on the front of the thighs, the glutes and the calves"
+ },
+ {
+  "slug": "exercise-dance-cardio",
+  "prompt": "a person seen from the front dancing with one knee lifted, hips tilted and both arms raised to one side",
+  "muscles": "the quadriceps on the front of the thighs, the calves and the obliques on the sides of the waist"
+ },
+ {
+  "slug": "exercise-inline-skating",
+  "prompt": "a person on inline skates wearing a helmet, knees bent and torso leaning forward, gliding on one skate with the other leg pushed out behind to the side",
+  "muscles": "the glutes, the quadriceps on the front of the thighs and the outer hips (gluteus medius)"
+ },
+ {
+  "slug": "exercise-mountain-pose",
+  "prompt": "a person standing tall seen from the front, feet together, legs straight, arms relaxed by the sides with palms facing forward, head upright",
+  "muscles": "the quadriceps on the front of the thighs and the abdominal muscles"
+ },
+ {
+  "slug": "exercise-standing-forward-fold",
+  "prompt": "a person seen from the side folded forward at the hips, legs straight, torso hanging down against the thighs, hands on the floor beside the feet, head hanging down",
+  "muscles": "the hamstrings on the back of the thighs"
+ },
+ {
+  "slug": "exercise-chair-pose",
+  "prompt": "a person seen from the side with knees bent and hips sitting back as if on an invisible chair, torso leaning slightly forward, both arms reaching up and forward alongside the ears",
+  "muscles": "the quadriceps on the front of the thighs and the glutes"
+ },
+ {
+  "slug": "exercise-downward-facing-dog",
+  "prompt": "a person in an inverted V seen from the side, hands and feet on the floor, hips high, arms and legs straight, head between the arms",
+  "muscles": "the shoulder muscles (deltoids), the hamstrings on the back of the thighs and the calves"
+ },
+ {
+  "slug": "exercise-upward-facing-dog",
+  "prompt": "a person seen from the side facing down with arms straight and hands under the shoulders, chest lifted and open, back arched, hips and thighs hovering just off the floor, legs straight back with the tops of the feet on the floor",
+  "muscles": "the lower back muscles along the spine, the triceps on the back of the upper arms and the chest muscles"
+ },
+ {
+  "slug": "exercise-cobra-pose",
+  "prompt": "a person seen from the side lying face down with hips and legs on the floor, hands under the shoulders, elbows bent close to the body, chest and head lifted in a gentle backbend",
+  "muscles": "the lower back muscles along the spine"
+ },
+ {
+  "slug": "exercise-sphinx-pose",
+  "prompt": "a person seen from the side lying face down with hips and legs on the floor, propped on the forearms with elbows under the shoulders, chest lifted and head looking forward",
+  "muscles": "the lower back muscles along the spine"
+ },
+ {
+  "slug": "exercise-four-limbed-staff-pose",
+  "prompt": "a person seen from the side in a low push-up position, body in a straight line hovering just above the floor, elbows bent at right angles close to the ribs, weight on the hands and toes",
+  "muscles": "the triceps on the back of the upper arms, the chest muscles and the abdominal muscles"
+ },
+ {
+  "slug": "exercise-childs-pose",
+  "prompt": "a person seen from the side kneeling and folded forward, hips resting on the heels, chest on the thighs, forehead on the floor, arms stretched forward along the floor",
+  "muscles": "the lower back muscles along the spine and the latissimus dorsi on the sides of the back"
+ },
+ {
+  "slug": "exercise-low-lunge",
+  "prompt": "a person seen from the side in a kneeling lunge, front knee bent at a right angle with the foot flat, back knee and top of the back foot on the floor, torso upright, both arms reaching straight up",
+  "muscles": "the hip flexors at the front of the hips and the quadriceps on the front of the thighs"
+ },
+ {
+  "slug": "exercise-high-lunge",
+  "prompt": "a person seen from the side in a deep lunge, front knee bent at a right angle, back leg straight with the heel lifted and weight on the ball of the foot, torso upright, both arms reaching straight up",
+  "muscles": "the quadriceps on the front of the thighs, the glutes and the hip flexors at the front of the hips"
+ },
+ {
+  "slug": "exercise-warrior-i",
+  "prompt": "a person seen from the side in a lunge with the front knee bent at a right angle, back leg straight with the whole foot flat on the floor and turned out, torso upright, both arms reaching straight up",
+  "muscles": "the quadriceps on the front of the thighs, the glutes and the shoulder muscles (deltoids)"
+ },
+ {
+  "slug": "exercise-warrior-ii",
+  "prompt": "a person seen from the front in a wide stance, one knee bent at a right angle with that foot turned out, the other leg straight, torso upright, arms stretched out horizontally to both sides, head turned towards the bent knee",
+  "muscles": "the quadriceps on the front of the thighs, the inner thighs (adductors) and the shoulder muscles (deltoids)"
+ },
+ {
+  "slug": "exercise-warrior-iii",
+  "prompt": "exactly one person seen from the side balancing on one straight leg, torso and the other leg in one horizontal line parallel to the floor, both arms stretched forward, forming a T shape",
+  "muscles": "the glutes, the hamstrings on the back of the thighs and the lower back muscles along the spine"
+ },
+ {
+  "slug": "exercise-extended-side-angle",
+  "prompt": "a person seen from the front in a wide stance with one knee bent at a right angle, torso leaning sideways over the bent leg, lower forearm resting on the bent thigh, upper arm reaching diagonally over the ear in line with the straight back leg",
+  "muscles": "the obliques on the sides of the waist and the quadriceps on the front of the thighs"
+ },
+ {
+  "slug": "exercise-triangle-pose",
+  "prompt": "a person seen from the front in a wide stance with both legs straight, torso tilted sideways over one leg, lower hand resting on that shin, other arm reaching straight up so both arms form one vertical line",
+  "muscles": "the obliques on the sides of the waist and the hamstrings on the back of the thighs"
+ },
+ {
+  "slug": "exercise-pyramid-pose",
+  "prompt": "a person seen from the side standing in a short split stance with both legs straight and both feet flat, torso folded forward over the front leg, hands on the floor either side of the front foot",
+  "muscles": "the hamstrings on the back of the thighs"
+ },
+ {
+  "slug": "exercise-wide-legged-forward-fold",
+  "prompt": "a person seen from the front standing with legs very wide apart and straight, torso folded forward and down between the legs, hands flat on the floor between the feet, top of the head pointing to the floor",
+  "muscles": "the hamstrings on the back of the thighs and the inner thighs (adductors)"
+ },
+ {
+  "slug": "exercise-goddess-pose",
+  "prompt": "a person seen from the front in a wide squat with toes turned out, knees bent at right angles pointing out over the feet, torso upright, arms raised to the sides with elbows bent at right angles and hands pointing up",
+  "muscles": "the quadriceps on the front of the thighs, the inner thighs (adductors) and the glutes"
+ },
+ {
+  "slug": "exercise-garland-pose",
+  "prompt": "a person seen from the front in a deep squat with feet flat and wider than the hips, hips low near the heels, knees wide apart, palms pressed together at the chest with elbows pushing against the inner knees, torso upright",
+  "muscles": "the inner thighs (adductors) and the glutes"
+ },
+ {
+  "slug": "exercise-tree-pose",
+  "prompt": "a person seen from the front balancing on one straight leg, the other knee bent out to the side with the sole of that foot pressed against the inner thigh of the standing leg, arms raised overhead with palms together",
+  "muscles": "the outer hips (gluteus medius) and the quadriceps on the front of the thighs"
+ },
+ {
+  "slug": "exercise-eagle-pose",
+  "prompt": "a person seen from the front balancing on one bent leg with the other leg crossed over it and wrapped around the calf, arms crossed and entwined in front of the face with elbows bent and forearms vertical",
+  "muscles": "the quadriceps on the front of the thighs and the shoulder muscles (deltoids)"
+ },
+ {
+  "slug": "exercise-half-moon-pose",
+  "prompt": "a person balancing on one straight leg and the fingertips of the same-side hand on the floor, torso horizontal with the chest facing the viewer, the other leg lifted straight out at hip height, top arm reaching straight up",
+  "muscles": "the outer hips (gluteus medius) and the obliques on the sides of the waist"
+ },
+ {
+  "slug": "exercise-boat-pose",
+  "prompt": "a person seen from the side balancing on the buttocks in a V shape, torso leaning back with a straight spine, legs straight and raised diagonally, arms reaching straight forward parallel to the floor",
+  "muscles": "the abdominal muscles and the hip flexors at the front of the hips"
+ },
+ {
+  "slug": "exercise-bridge-pose",
+  "prompt": "a person seen from the side lying on the upper back with knees bent and feet flat on the floor, hips lifted high so the body slopes from the knees down to the shoulders, arms on the floor under the body, head on the floor",
+  "muscles": "the glutes, the hamstrings on the back of the thighs and the lower back muscles along the spine"
+ },
+ {
+  "slug": "exercise-wheel-pose",
+  "prompt": "a person seen from the side in a high back arch, hands and feet flat on the floor, arms and legs supporting the body, belly facing up and hips lifted highest, head hanging between the arms",
+  "muscles": "the lower back muscles along the spine, the shoulder muscles (deltoids) and the glutes"
+ },
+ {
+  "slug": "exercise-camel-pose",
+  "prompt": "a person seen from the side kneeling with thighs vertical, hips pushed forward, torso arched backwards, arms reaching straight back with hands holding the heels, chest lifted and head tilted back",
+  "muscles": "the chest muscles and the hip flexors at the front of the hips"
+ },
+ {
+  "slug": "exercise-locust-pose",
+  "prompt": "a person seen from the side lying on the belly with chest, head, arms and straight legs all lifted off the floor, arms reaching back alongside the body, only the abdomen and hips touching the floor",
+  "muscles": "the lower back muscles along the spine and the glutes"
+ },
+ {
+  "slug": "exercise-seated-forward-fold",
+  "prompt": "a person seen from the side sitting on the floor with legs straight out in front, torso folded forward over the legs, hands holding the feet, head lowered towards the shins",
+  "muscles": "the hamstrings on the back of the thighs and the lower back muscles along the spine"
+ },
+ {
+  "slug": "exercise-bound-angle-pose",
+  "prompt": "a person seen from the front sitting upright on the floor with the soles of the feet pressed together close to the body, knees dropped wide out to the sides, hands holding the feet",
+  "muscles": "the inner thighs (adductors)"
+ },
+ {
+  "slug": "exercise-cow-face-pose",
+  "prompt": "a person sitting upright seen from behind with knees stacked one on top of the other in front and feet beside the hips, one elbow pointing up and the other pointing down, hands clasped together behind the back between the shoulder blades",
+  "muscles": "the shoulder muscles (deltoids), the triceps on the back of the upper arms and the glutes"
+ },
+ {
+  "slug": "exercise-half-lord-of-the-fishes",
+  "prompt": "a person sitting on the floor seen from the front with one knee bent upright and that foot crossed outside the opposite thigh, torso twisted towards the raised knee, opposite elbow hooked outside the knee, other hand on the floor behind",
+  "muscles": "the obliques on the sides of the waist and the lower back muscles along the spine"
+ },
+ {
+  "slug": "exercise-supine-twist",
+  "prompt": "one person lying on their back seen from the side and slightly above, arms out to the sides, both bent knees dropped together to one side of the body",
+  "muscles": "the obliques on the sides of the waist and the lower back muscles along the spine"
+ },
+ {
+  "slug": "exercise-happy-baby",
+  "prompt": "a person lying on the back seen from the side with both knees bent and drawn wide towards the armpits, shins vertical with the soles of the feet facing up, hands holding the outer edges of the feet, head on the floor",
+  "muscles": "the inner thighs (adductors) and the hamstrings on the back of the thighs"
+ },
+ {
+  "slug": "exercise-pigeon-pose",
+  "prompt": "a person seen from the side on the floor with one leg bent in front and its shin lying across under the chest, the other leg stretched straight back along the floor, torso folded forward over the front shin with arms reaching forward and forehead down",
+  "muscles": "the glutes and the hip flexors at the front of the hips"
+ },
+ {
+  "slug": "exercise-thread-the-needle",
+  "prompt": "a person seen from the front kneeling on all fours with hips above the knees, one arm threaded under the chest and stretched out sideways along the floor, that shoulder and the side of the head resting on the floor, the other hand on the floor ahead",
+  "muscles": "the upper back between the shoulder blades (trapezius and rhomboids) and the shoulder muscles (deltoids)"
+ },
+ {
+  "slug": "exercise-crow-pose",
+  "prompt": "a person seen from the side balancing on the hands only, arms bent, knees resting high on the backs of the upper arms, body tucked into a ball with feet lifted off the floor near the hips, head looking forward",
+  "muscles": "the shoulder muscles (deltoids), the triceps on the back of the upper arms and the abdominal muscles"
+ },
+ {
+  "slug": "exercise-shoulder-stand",
+  "prompt": "a person seen from the side balanced upside down on the shoulders and upper arms, body and legs straight and vertical with toes pointing up, hands supporting the lower back with elbows on the floor, head and neck resting on the floor",
+  "muscles": "the shoulder muscles (deltoids) and the abdominal muscles"
+ },
+ {
+  "slug": "exercise-legs-up-the-wall",
+  "prompt": "a person seen from the side lying on the back with hips close to a wall and both legs straight up resting against the wall, body forming an L shape, arms relaxed on the floor",
+  "muscles": "the hamstrings on the back of the thighs and the calves"
+ },
+ {
+  "slug": "exercise-corpse-pose",
+  "prompt": "a person lying flat on the back seen from the side, legs straight and slightly apart, arms resting on the floor a little away from the body with palms up, eyes closed",
+  "muscles": ""
+ },
+ {
+  "slug": "exercise-sun-salutation-a",
+  "prompt": "a person seen from the side standing tall with feet together and both arms reaching straight up overhead with palms together, chest lifted and gaze turned up towards the hands",
+  "muscles": "the shoulder muscles (deltoids) and the abdominal muscles"
+ },
+ {
+  "slug": "exercise-sun-salutation-b",
+  "prompt": "a person seen from the side stepping forward into a lunge with the front knee bent, back leg straight with the heel down, both arms reaching up overhead with palms together and gaze turned up towards the hands",
+  "muscles": "the quadriceps on the front of the thighs and the shoulder muscles (deltoids)"
+ },
+ {
+  "slug": "exercise-worlds-greatest-stretch",
+  "prompt": "a person seen from the side in a long low lunge, front knee bent with the foot flat, back leg straight on the toes, one hand on the floor inside the front foot, torso rotated open with the other arm reaching straight up",
+  "muscles": "the hip flexors at the front of the hips, the hamstrings on the back of the thighs and the obliques on the sides of the waist"
+ },
+ {
+  "slug": "exercise-90-90-hip-switch",
+  "prompt": "a person sitting upright on the floor seen from the front, both knees bent at right angles and dropped to the same side, front shin lying across in front of the body and the other shin pointing back beside the hip, hands on the floor behind",
+  "muscles": "the glutes and the outer hips (gluteus medius)"
+ },
+ {
+  "slug": "exercise-couch-stretch",
+  "prompt": "a person seen from the side kneeling in a lunge in front of a wall, back knee on the floor at the base of the wall with that shin pointing straight up against the wall, front foot flat with the knee bent, torso upright, hands on the front knee",
+  "muscles": "the quadriceps on the front of the thighs and the hip flexors at the front of the hips"
+ },
+ {
+  "slug": "exercise-standing-hamstring-stretch",
+  "prompt": "a person seen from the side standing with one leg straight out in front, heel on the floor and toes pulled up, the back knee slightly bent, torso hinged forward with a flat back, hands resting on the bent thigh",
+  "muscles": "the hamstrings on the back of the thighs"
+ },
+ {
+  "slug": "exercise-figure-four-stretch",
+  "prompt": "a person lying on the back seen from the side, one ankle crossed over the opposite thigh forming a figure four, both legs lifted with hands clasped behind the supporting thigh pulling it towards the chest, head on the floor",
+  "muscles": "the glutes"
+ },
+ {
+  "slug": "exercise-standing-quad-stretch",
+  "prompt": "a person seen from the side standing upright on one leg, the other knee bent with the heel pulled up towards the buttock, same-side hand holding that ankle behind the body, knees side by side",
+  "muscles": "the quadriceps on the front of the thighs"
+ },
+ {
+  "slug": "exercise-wall-calf-stretch",
+  "prompt": "a person seen from the side leaning forward with both hands on a wall, one leg forward with the knee bent, the other leg stretched straight back with the heel flat on the floor, body in a straight line from the back heel to the head",
+  "muscles": "the calves"
+ },
+ {
+  "slug": "exercise-knee-to-wall-ankle-mobilisation",
+  "prompt": "a person seen from the side standing in a short split stance facing a wall, front foot flat a few centimetres from the wall, front knee bent forward to touch the wall with the heel down, hands on the wall",
+  "muscles": "the calves"
+ },
+ {
+  "slug": "exercise-deep-squat-hold",
+  "prompt": "a person seen from the side in a deep resting squat, feet flat, hips dropped below the knees close to the heels, torso leaning slightly forward, arms extended forward in front of the knees",
+  "muscles": "the inner thighs (adductors) and the glutes"
+ },
+ {
+  "slug": "exercise-leg-swings",
+  "prompt": "a person seen from the side standing upright on one leg with one hand resting on a wall, the other leg swung straight forward and up to about hip height",
+  "muscles": "the hip flexors at the front of the hips and the hamstrings on the back of the thighs"
+ },
+ {
+  "slug": "exercise-arm-circles",
+  "prompt": "a person standing upright seen from the front with feet hip-width apart and both arms stretched straight out to the sides at shoulder height",
+  "muscles": "the shoulder muscles (deltoids)"
+ },
+ {
+  "slug": "exercise-shoulder-pass-through",
+  "prompt": "a person standing upright seen from the front holding a long stick with a very wide grip, both arms straight and raised overhead so the stick is horizontal above the head",
+  "muscles": "the shoulder muscles (deltoids) and the chest muscles"
+ },
+ {
+  "slug": "exercise-wall-angels",
+  "prompt": "a person standing with the back flat against a wall seen from the front, both arms raised out to the sides with elbows bent at right angles and hands pointing up in a goalpost shape, backs of the arms touching the wall",
+  "muscles": "the shoulder muscles (deltoids) and the upper back between the shoulder blades (trapezius and rhomboids)"
+ },
+ {
+  "slug": "exercise-doorway-chest-stretch",
+  "prompt": "a person seen from the front standing beside a vertical door frame with one foot stepped forward, one arm raised to the side with the elbow bent at a right angle at shoulder height and the forearm resting on the frame, chest turned slightly away from that arm",
+  "muscles": "the chest muscles and the shoulder muscles (deltoids)"
+ },
+ {
+  "slug": "exercise-cross-body-shoulder-stretch",
+  "prompt": "a person standing upright seen from the front with one arm held straight across the chest at shoulder height, the other arm bent and hooked under it just above the elbow, pulling it towards the chest",
+  "muscles": "the shoulder muscles (deltoids)"
+ },
+ {
+  "slug": "exercise-overhead-triceps-stretch",
+  "prompt": "a person standing upright seen from behind with one arm raised and bent so the elbow points up beside the head and the hand hangs down between the shoulder blades, the other hand reaching over the head to hold that elbow",
+  "muscles": "the triceps on the back of the upper arms"
+ },
+ {
+  "slug": "exercise-open-book-rotation",
+  "prompt": "a person lying on one side seen from above with hips and knees bent at right angles and stacked, lower arm stretched out in front on the floor, upper arm opened across to the other side so the chest faces up and the arms form one wide line",
+  "muscles": "the chest muscles and the obliques on the sides of the waist"
+ },
+ {
+  "slug": "exercise-foam-roller-thoracic-extension",
+  "prompt": "a person seen from the side lying back over a foam roller placed under the upper back, knees bent with feet flat and hips on the floor, hands clasped behind the head, upper back arched gently over the roller",
+  "muscles": "the upper back between the shoulder blades (trapezius and rhomboids)"
+ },
+ {
+  "slug": "exercise-neck-stretch",
+  "prompt": "a person standing upright seen from the front with the head tilted so one ear moves towards the shoulder, the same-side hand resting lightly on top of the head, the other arm hanging straight down",
+  "muscles": "the side of the neck and the trapezius between the neck and the shoulders"
+ },
+ {
+  "slug": "exercise-wrist-stretch",
+  "prompt": "a person standing upright seen from the side with one arm held straight out in front at shoulder height, palm up and fingers pointing down, the other hand pulling those fingers back towards the body",
+  "muscles": "the forearms"
+ },
+ {
+  "slug": "exercise-frog-stretch",
+  "prompt": "a person face down on forearms and knees seen from above, knees spread very wide to the sides level with the hips, shins pointing straight back with the feet turned out, hips pushed back between the knees",
+  "muscles": "the inner thighs (adductors)"
+ },
+ {
+  "slug": "exercise-foam-rolling",
+  "prompt": "a person seen from the side face down propped on the forearms with a foam roller under the front of one thigh, body held straight like a plank, the other leg resting bent out to the side",
+  "muscles": "the quadriceps on the front of the thighs"
+ },
+ {
+  "slug": "exercise-back-squat",
+  "prompt": "a person seen from the side in a deep squat with a barbell with round plates resting across the upper back, hands gripping the bar, thighs parallel to the floor",
+  "muscles": "the quadriceps on the front of the thighs and the glutes"
+ },
+ {
+  "slug": "exercise-goblet-squat",
+  "prompt": "a person seen from the side in a deep squat with heels flat on the floor, holding one dumbbell vertically against the chest with both hands, elbows pointing down between the knees",
+  "muscles": "the quadriceps on the front of the thighs and the glutes"
+ },
+ {
+  "slug": "exercise-dumbbell-bench-press",
+  "prompt": "a person lying on their back on a flat bench seen from the side, feet on the floor, pressing a dumbbell in each hand straight up above the chest with arms extended",
+  "muscles": "the chest muscles, the triceps on the back of the upper arms and the shoulder muscles (deltoids)"
+ },
+ {
+  "slug": "exercise-incline-dumbbell-press",
+  "prompt": "a person reclining on an inclined bench seen from the side, feet on the floor, pressing a dumbbell in each hand straight up above the upper chest with arms extended",
+  "muscles": "the chest muscles and the shoulder muscles (deltoids)"
+ },
+ {
+  "slug": "exercise-dumbbell-fly",
+  "prompt": "a person lying on their back on a flat bench seen from the head end, arms spread wide out to the sides with slightly bent elbows, a dumbbell in each hand at chest level",
+  "muscles": "the chest muscles"
+ },
+ {
+  "slug": "exercise-dumbbell-lateral-raise",
+  "prompt": "a person standing upright seen from the front, both arms raised straight out to the sides at shoulder height forming a T shape, a dumbbell in each hand",
+  "muscles": "the shoulder muscles (deltoids)"
+ },
+ {
+  "slug": "exercise-dumbbell-front-raise",
+  "prompt": "a person standing upright seen from the side, both arms held straight out in front of the body at shoulder height, a dumbbell in each hand with palms facing down",
+  "muscles": "the shoulder muscles (deltoids)"
+ },
+ {
+  "slug": "exercise-dumbbell-reverse-fly",
+  "prompt": "a person seen from the front bent forward at the hips with a flat back and knees slightly bent, both arms lifted out to the sides like wings at shoulder level, a dumbbell in each hand",
+  "muscles": "the shoulder muscles (deltoids) and the upper back between the shoulder blades (trapezius and rhomboids)"
+ },
+ {
+  "slug": "exercise-arnold-press",
+  "prompt": "a person sitting upright on a bench seen from the front, holding two dumbbells in front of the shoulders at chin height with elbows bent and tucked in front of the chest, palms facing the body",
+  "muscles": "the shoulder muscles (deltoids) and the triceps on the back of the upper arms"
+ },
+ {
+  "slug": "exercise-hammer-curl",
+  "prompt": "a person standing upright seen from the side, upper arm held against the ribs and elbow bent so a dumbbell is raised vertically in front of the shoulder with the thumb on top",
+  "muscles": "the biceps on the front of the upper arms and the forearms"
+ },
+ {
+  "slug": "exercise-dumbbell-triceps-extension",
+  "prompt": "a person standing upright seen from the side, both upper arms raised beside the head with elbows bent and pointing up, both hands holding one dumbbell lowered behind the head",
+  "muscles": "the triceps on the back of the upper arms"
+ },
+ {
+  "slug": "exercise-dumbbell-kickback",
+  "prompt": "a person seen from the side leaning forward with one hand and one knee resting on a flat bench and the back flat, the other arm extended straight back alongside the hip holding a dumbbell",
+  "muscles": "the triceps on the back of the upper arms"
+ },
+ {
+  "slug": "exercise-dumbbell-pullover",
+  "prompt": "a person lying on their back on a flat bench seen from the side, both arms reaching back over the head with slightly bent elbows, both hands holding one dumbbell lowered behind the head",
+  "muscles": "the latissimus dorsi on the sides of the back and the chest muscles"
+ },
+ {
+  "slug": "exercise-dumbbell-shrug",
+  "prompt": "a person standing upright seen from the front, arms hanging straight at the sides with a dumbbell in each hand, both shoulders lifted high towards the ears",
+  "muscles": "the trapezius between the neck and the shoulders"
+ },
+ {
+  "slug": "exercise-dumbbell-walking-lunge",
+  "prompt": "a person seen from the side in a deep lunge mid-stride, front knee bent at a right angle and back knee just above the floor, torso upright, arms hanging straight down with a dumbbell in each hand",
+  "muscles": "the quadriceps on the front of the thighs and the glutes"
+ },
+ {
+  "slug": "exercise-dumbbell-split-squat",
+  "prompt": "a person seen from the side in a static split stance, front foot flat and back foot on its toes, both knees bent with the back knee near the floor, torso upright, a dumbbell held in each hand at the sides",
+  "muscles": "the quadriceps on the front of the thighs and the glutes"
+ },
+ {
+  "slug": "exercise-dumbbell-step-up",
+  "prompt": "a person seen from the side stepping up onto a knee-high box, one foot flat on top of the box with the knee bent and the other foot still on the floor behind, a dumbbell held in each hand at the sides",
+  "muscles": "the quadriceps on the front of the thighs and the glutes"
+ },
+ {
+  "slug": "exercise-dumbbell-hip-thrust",
+  "prompt": "a person seen from the side with the upper back resting on the edge of a bench, feet flat on the floor and knees bent at right angles, hips raised so torso and thighs form a flat table, holding one dumbbell across the hips",
+  "muscles": "the glutes and the hamstrings on the back of the thighs"
+ },
+ {
+  "slug": "exercise-renegade-row",
+  "prompt": "a person seen from the side in a straight-arm plank with feet apart, one hand supporting the body on a dumbbell on the floor and the other arm pulling a second dumbbell up to the ribs with the elbow pointing up",
+  "muscles": "the latissimus dorsi on the sides of the back, the abdominal muscles and the upper back between the shoulder blades (trapezius and rhomboids)"
+ },
+ {
+  "slug": "exercise-farmers-carry",
+  "prompt": "a person walking upright seen from the side in mid-stride, arms hanging straight down at the sides with a heavy dumbbell gripped in each hand",
+  "muscles": "the forearms, the trapezius between the neck and the shoulders and the abdominal muscles"
+ },
+ {
+  "slug": "exercise-suitcase-carry",
+  "prompt": "a person walking upright seen from the front with level shoulders, one arm hanging straight down holding a single heavy dumbbell at the side like a suitcase and the other hand empty",
+  "muscles": "the obliques on the sides of the waist and the forearms"
+ },
+ {
+  "slug": "exercise-dumbbell-woodchop",
+  "prompt": "a person standing seen from the front with torso rotated to one side, both arms extended holding one dumbbell high above one shoulder, the opposite heel lifted and pivoted",
+  "muscles": "the obliques on the sides of the waist and the shoulder muscles (deltoids)"
+ },
+ {
+  "slug": "exercise-front-squat",
+  "prompt": "a person seen from the side in a deep squat with an upright torso, a barbell resting across the front of the shoulders, elbows lifted high and pointing forward, fingertips under the bar",
+  "muscles": "the quadriceps on the front of the thighs and the glutes"
+ },
+ {
+  "slug": "exercise-romanian-deadlift",
+  "prompt": "a person seen from the side hinged forward at the hips with a flat back and only slightly bent knees, hips pushed far back, arms straight down holding a barbell just below the knees",
+  "muscles": "the hamstrings on the back of the thighs, the glutes and the lower back muscles along the spine"
+ },
+ {
+  "slug": "exercise-sumo-deadlift",
+  "prompt": "a person seen from the front in a very wide stance with toes turned out and knees bent outwards, torso fairly upright, arms hanging straight down between the legs gripping a barbell on the floor",
+  "muscles": "the inner thighs (adductors), the glutes and the quadriceps on the front of the thighs"
+ },
+ {
+  "slug": "exercise-barbell-row",
+  "prompt": "a person seen from the side bent forward at the hips with a flat back and slightly bent knees, pulling a barbell up to the lower ribs with elbows bent and pointing back behind the body",
+  "muscles": "the latissimus dorsi on the sides of the back, the upper back between the shoulder blades (trapezius and rhomboids) and the biceps on the front of the upper arms"
+ },
+ {
+  "slug": "exercise-incline-bench-press",
+  "prompt": "a person reclining on an inclined bench seen from the side, feet on the floor, both arms extended straight up holding a barbell above the upper chest",
+  "muscles": "the chest muscles, the shoulder muscles (deltoids) and the triceps on the back of the upper arms"
+ },
+ {
+  "slug": "exercise-close-grip-bench-press",
+  "prompt": "a person lying on their back on a flat bench seen from the head end, holding a barbell just above the chest with hands shoulder-width apart and elbows tucked tight against the sides",
+  "muscles": "the triceps on the back of the upper arms and the chest muscles"
+ },
+ {
+  "slug": "exercise-push-press",
+  "prompt": "a person standing seen from the side with knees slightly bent in a shallow dip and torso upright, a barbell resting on the front of the shoulders with hands gripping it and elbows pointing slightly forward",
+  "muscles": "the shoulder muscles (deltoids), the triceps on the back of the upper arms and the quadriceps on the front of the thighs"
+ },
+ {
+  "slug": "exercise-hip-thrust",
+  "prompt": "a person seen from the side with the upper back resting on the edge of a bench, feet flat and knees bent at right angles, hips raised so torso and thighs form a flat table, a loaded barbell lying across the hips held by both hands",
+  "muscles": "the glutes and the hamstrings on the back of the thighs"
+ },
+ {
+  "slug": "exercise-good-morning",
+  "prompt": "a person seen from the side bowing forward at the hips with a flat back and slightly bent knees, torso almost parallel to the floor, a barbell resting across the upper back held by both hands",
+  "muscles": "the hamstrings on the back of the thighs, the glutes and the lower back muscles along the spine"
+ },
+ {
+  "slug": "exercise-barbell-curl",
+  "prompt": "a person standing upright seen from the side, elbows bent and held at the ribs, both hands gripping a barbell palms-up and curled up to chest height",
+  "muscles": "the biceps on the front of the upper arms"
+ },
+ {
+  "slug": "exercise-skull-crusher",
+  "prompt": "a person lying on their back on a flat bench seen from the side, upper arms pointing up and elbows bent so a barbell held in both hands is lowered just above the forehead",
+  "muscles": "the triceps on the back of the upper arms"
+ },
+ {
+  "slug": "exercise-landmine-press",
+  "prompt": "a person standing in a staggered stance seen from the side, leaning slightly forward and pressing the raised end of a barbell up and forward with one arm, the far end of the bar anchored on the floor",
+  "muscles": "the shoulder muscles (deltoids), the chest muscles and the triceps on the back of the upper arms"
+ },
+ {
+  "slug": "exercise-power-clean",
+  "prompt": "a person seen from the side standing in a shallow quarter squat having just caught a barbell on the front of the shoulders, elbows lifted high and pointing forward, feet flat",
+  "muscles": "the glutes, the quadriceps on the front of the thighs and the trapezius between the neck and the shoulders"
+ },
+ {
+  "slug": "exercise-kettlebell-deadlift",
+  "prompt": "a person seen from the side hinged forward at the hips with a flat back and bent knees, both arms straight down gripping the handle of a kettlebell standing on the floor between the feet",
+  "muscles": "the glutes, the hamstrings on the back of the thighs and the lower back muscles along the spine"
+ },
+ {
+  "slug": "exercise-kettlebell-clean",
+  "prompt": "a person standing upright seen from the front holding one kettlebell in the rack position, elbow tucked against the ribs, fist under the chin and the kettlebell resting on the back of the forearm against the chest",
+  "muscles": "the glutes, the shoulder muscles (deltoids) and the forearms"
+ },
+ {
+  "slug": "exercise-kettlebell-press",
+  "prompt": "a person standing upright seen from the front with one arm fully extended overhead holding a kettlebell that rests on the back of the forearm, the other arm relaxed at the side",
+  "muscles": "the shoulder muscles (deltoids) and the triceps on the back of the upper arms"
+ },
+ {
+  "slug": "exercise-turkish-get-up",
+  "prompt": "a person seen from the side sitting on the floor propped up on one straight arm, one knee bent with the foot flat and the other leg extended, the free arm locked straight up holding a kettlebell overhead",
+  "muscles": "the shoulder muscles (deltoids), the abdominal muscles and the glutes"
+ },
+ {
+  "slug": "exercise-kettlebell-halo",
+  "prompt": "a person standing upright seen from the front holding an upside-down kettlebell by the sides of its handle beside the head at ear level, both elbows bent and raised as the bell circles the head",
+  "muscles": "the shoulder muscles (deltoids) and the abdominal muscles"
+ },
+ {
+  "slug": "exercise-kettlebell-windmill",
+  "prompt": "a person seen from the front with feet apart and legs straight, torso folded sideways at the hip, one arm reaching down to touch the opposite foot and the other arm pointing straight up holding a kettlebell, eyes looking up at it",
+  "muscles": "the obliques on the sides of the waist, the shoulder muscles (deltoids) and the hamstrings on the back of the thighs"
+ },
+ {
+  "slug": "exercise-kettlebell-row",
+  "prompt": "a person seen from the side in a staggered stance leaning forward with a flat back, one forearm resting on the front thigh and the other arm pulling a kettlebell up to the hip with the elbow pointing up",
+  "muscles": "the latissimus dorsi on the sides of the back, the upper back between the shoulder blades (trapezius and rhomboids) and the biceps on the front of the upper arms"
+ },
+ {
+  "slug": "exercise-band-pull-apart",
+  "prompt": "a person standing upright seen from behind with both arms stretched straight out to the sides at shoulder height, a resistance band pulled taut across the chest between the two hands",
+  "muscles": "the shoulder muscles (deltoids) and the upper back between the shoulder blades (trapezius and rhomboids)"
+ },
+ {
+  "slug": "exercise-band-row",
+  "prompt": "a person standing upright seen from the side with knees slightly bent, pulling both ends of a resistance band to the ribs with elbows bent behind the body, the band stretched horizontally to an anchor point in front at chest height",
+  "muscles": "the latissimus dorsi on the sides of the back, the upper back between the shoulder blades (trapezius and rhomboids) and the biceps on the front of the upper arms"
+ },
+ {
+  "slug": "exercise-band-face-pull",
+  "prompt": "a person standing upright seen from the side pulling a resistance band towards the face, both elbows lifted high and wide at shoulder level with hands beside the ears, the band stretched to an anchor point in front at head height",
+  "muscles": "the shoulder muscles (deltoids) and the upper back between the shoulder blades (trapezius and rhomboids)"
+ },
+ {
+  "slug": "exercise-band-chest-press",
+  "prompt": "a person standing in a staggered stance seen from the side, both arms pressed straight out in front of the chest holding the ends of a resistance band that stretches back to an anchor point behind at chest height",
+  "muscles": "the chest muscles, the triceps on the back of the upper arms and the shoulder muscles (deltoids)"
+ },
+ {
+  "slug": "exercise-lateral-band-walk",
+  "prompt": "a person seen from the front in a quarter squat with hands on hips, stepping sideways with feet wide apart, a small loop band stretched around both legs just above the knees",
+  "muscles": "the outer hips (gluteus medius)"
+ },
+ {
+  "slug": "exercise-band-pallof-press",
+  "prompt": "a person standing seen from the front with feet shoulder-width apart, both arms pressed straight out in front of the chest with hands clasped around a resistance band that stretches sideways to an anchor point at chest height",
+  "muscles": "the obliques on the sides of the waist and the abdominal muscles"
+ },
+ {
+  "slug": "exercise-lat-pulldown",
+  "prompt": "a person sitting upright on a pulldown machine seen from behind with thighs under a pad, pulling a wide bar down to the upper chest with elbows bent and pointing down and out, a cable running up from the bar",
+  "muscles": "the latissimus dorsi on the sides of the back and the biceps on the front of the upper arms"
+ },
+ {
+  "slug": "exercise-seated-cable-row",
+  "prompt": "a person sitting upright on the floor-level seat of a cable row machine seen from the side, feet braced on a footplate with knees slightly bent, pulling a handle to the stomach with elbows bent behind the body, a horizontal cable running forward",
+  "muscles": "the latissimus dorsi on the sides of the back, the upper back between the shoulder blades (trapezius and rhomboids) and the biceps on the front of the upper arms"
+ },
+ {
+  "slug": "exercise-cable-face-pull",
+  "prompt": "a person standing upright seen from the side pulling a rope attachment towards the face, both elbows lifted high and wide at shoulder level with hands beside the ears, a cable running forward to a pulley at head height",
+  "muscles": "the shoulder muscles (deltoids) and the upper back between the shoulder blades (trapezius and rhomboids)"
+ },
+ {
+  "slug": "exercise-cable-triceps-pushdown",
+  "prompt": "a person standing upright seen from the side facing a tall cable machine, elbows tucked at the ribs and both arms pushed straight down gripping a short bar at thigh level, a cable running up to a high pulley",
+  "muscles": "the triceps on the back of the upper arms"
+ },
+ {
+  "slug": "exercise-cable-fly",
+  "prompt": "a person standing in a staggered stance seen from the front between two cable towers, leaning slightly forward with both arms sweeping together in front of the chest, a handle in each hand and cables running out and up to each side",
+  "muscles": "the chest muscles"
+ },
+ {
+  "slug": "exercise-cable-woodchop",
+  "prompt": "a person standing seen from the front beside a tall cable machine, torso rotated and knees slightly bent, both arms extended pulling a handle diagonally down to the outside of one knee, a cable running up to a high pulley on the opposite side",
+  "muscles": "the obliques on the sides of the waist"
+ },
+ {
+  "slug": "exercise-leg-press",
+  "prompt": "a person seen from the side reclining in an angled leg press seat, back against the pad, knees bent towards the chest and both feet flat against a large tilted platform above",
+  "muscles": "the quadriceps on the front of the thighs and the glutes"
+ },
+ {
+  "slug": "exercise-leg-extension",
+  "prompt": "a person sitting upright in a leg extension machine seen from the side, hands holding the seat handles, both legs extended straight out in front with a padded roller resting on the lower shins",
+  "muscles": "the quadriceps on the front of the thighs"
+ },
+ {
+  "slug": "exercise-leg-curl",
+  "prompt": "a person lying face down on a leg curl machine seen from the side, hands gripping handles under the bench, knees bent so the lower legs point upwards with a padded roller behind the ankles",
+  "muscles": "the hamstrings on the back of the thighs"
+ },
+ {
+  "slug": "exercise-chest-press-machine",
+  "prompt": "a person sitting upright in a chest press machine seen from the side, back against the pad and feet flat, both arms pushed straight forward gripping the machine handles at chest height",
+  "muscles": "the chest muscles, the triceps on the back of the upper arms and the shoulder muscles (deltoids)"
+ },
+ {
+  "slug": "exercise-assisted-pull-up",
+  "prompt": "a person seen from behind kneeling on the padded platform of an assisted pull-up machine, hands gripping overhead handles and pulled up so the chin is level with the hands, elbows bent out to the sides",
+  "muscles": "the latissimus dorsi on the sides of the back and the biceps on the front of the upper arms"
+ },
+ {
+  "slug": "exercise-back-extension",
+  "prompt": "a person seen from the side on a 45-degree back extension bench, thighs resting on a pad and heels hooked under rollers, body in a straight diagonal line from head to heels with arms crossed over the chest",
+  "muscles": "the lower back muscles along the spine, the glutes and the hamstrings on the back of the thighs"
+ },
+ {
+  "slug": "exercise-seated-calf-raise",
+  "prompt": "a person sitting upright on a seated calf raise machine seen from the side, knees bent at right angles under thick pads, balls of the feet on a low footplate and heels lifted high",
+  "muscles": "the calves"
+ }
+]
